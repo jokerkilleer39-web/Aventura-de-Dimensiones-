@@ -1,0 +1,29 @@
+{
+  "name": "Aventura de Dimensiones",
+  "short_name": "Dimensiones",
+  "description": "Aventura de Dimensiones - Capitulo 1",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#02020a",
+  "theme_color": "#02020a",
+  "orientation": "portrait",
+  "scope": "./",
+  "icons": [
+    {
+      "src": "./icono.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "./icono.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "./icono.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
