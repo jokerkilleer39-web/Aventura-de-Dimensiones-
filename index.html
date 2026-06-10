@@ -1,0 +1,2751 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <link rel="manifest" href="manifest.json">
+<script>
+  if('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js');
+  }
+</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Aventura de Dimensiones - Menú</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --neon-cyan: #00ffcc;
+            --neon-pink: #ff0055;
+            --neon-gold: #ffcc00;
+            --bg-deep: #02020a;
+            --bg-card: #0a0d1a;
+            --border-subtle: #1a2040;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background: #010108;
+            color: white;
+            font-family: 'Rajdhani', sans-serif;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            user-select: none;
+            -webkit-user-select: none;
+            overflow: hidden;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(ellipse at 30% 20%, rgba(0,255,204,0.04) 0%, transparent 50%),
+                        radial-gradient(ellipse at 70% 80%, rgba(255,0,85,0.04) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+        #pantalla-juego {
+            width: 360px;
+            height: 620px;
+            background: #07091200;
+            border: 1px solid #1a2040;
+            border-radius: 28px;
+            overflow: hidden;
+            position: relative;
+            box-shadow:
+                0 0 0 1px rgba(0,255,204,0.08),
+                0 0 40px rgba(0,255,204,0.06),
+                0 0 80px rgba(255,0,85,0.04),
+                inset 0 0 30px rgba(0,0,0,0.8);
+            z-index: 1;
+        }
+        .pantalla {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s;
+            transform: translateX(100%);
+            opacity: 0;
+            pointer-events: none;
+        }
+        .pantalla.activa { transform: translateX(0); opacity: 1; pointer-events: all; }
+
+        /* ─── MENÚ PRINCIPAL ─── */
+        #inicio {
+            justify-content: flex-start;
+            background: linear-gradient(180deg, #0a0d1a 0%, #050810 100%);
+            overflow: hidden;
+        }
+        .logo-area {
+            width: 100%;
+            padding: 40px 25px 0;
+            text-align: center;
+            position: relative;
+        }
+        .logo-eyebrow {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 9px;
+            letter-spacing: 5px;
+            color: var(--neon-cyan);
+            opacity: 0.6;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+        .logo-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 32px;
+            font-weight: 900;
+            line-height: 1.1;
+            color: #fff;
+            letter-spacing: 2px;
+            animation: tituloPulso 2.8s ease-in-out infinite;
+        }
+        .logo-title span {
+            color: var(--neon-pink);
+            display: block;
+            font-size: 28px;
+        }
+        @keyframes tituloPulso {
+            0%, 100% {
+                text-shadow: 0 0 20px rgba(255,0,85,0.6), 0 0 60px rgba(255,0,85,0.3);
+                opacity: 1;
+            }
+            50% {
+                text-shadow: 0 0 35px rgba(255,0,85,0.95), 0 0 90px rgba(255,0,85,0.55), 0 0 130px rgba(255,0,85,0.2);
+                opacity: 0.92;
+            }
+        }
+        .logo-line {
+            width: 60px;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--neon-cyan), transparent);
+            margin: 14px auto;
+        }
+        .hero-preview {
+            width: 140px;
+            height: 160px;
+            margin: 0 auto 10px;
+            position: relative;
+        }
+        .hero-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            filter: drop-shadow(0 0 20px rgba(0,255,204,0.3));
+            animation: heroFloat 3s ease-in-out infinite;
+        }
+        .hero-preview::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 15px;
+            background: radial-gradient(ellipse, rgba(0,255,204,0.25), transparent);
+            border-radius: 50%;
+            animation: shadowPulse 3s ease-in-out infinite;
+        }
+        @keyframes heroFloat {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+        }
+        @keyframes shadowPulse {
+            0%, 100% { opacity: 0.6; transform: translateX(-50%) scaleX(1); }
+            50% { opacity: 0.3; transform: translateX(-50%) scaleX(0.7); }
+        }
+        .menu-botones {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 82%;
+            align-items: stretch;
+            overflow-y: auto;
+            overflow-x: hidden;
+            flex: 1;
+            padding: 4px 2px 12px;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior: contain;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(0,255,204,0.2) transparent;
+        }
+        .menu-botones::-webkit-scrollbar { width: 3px; }
+        .menu-botones::-webkit-scrollbar-track { background: transparent; }
+        .menu-botones::-webkit-scrollbar-thumb { background: rgba(0,255,204,0.2); border-radius: 2px; }
+        .btn-menu {
+            position: relative;
+            background: transparent;
+            border: none;
+            color: white;
+            padding: 0;
+            border-radius: 0;
+            width: 100%;
+            cursor: pointer;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            flex-shrink: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .btn-menu .btn-inner {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 14px 16px;
+            border-radius: 8px;
+            transition: all 0.2s;
+            position: relative;
+            font-size: 13px;
+            letter-spacing: 1.5px;
+            white-space: nowrap;
+            overflow: visible;
+        }
+        .btn-menu .btn-icon { font-size: 16px; flex-shrink: 0; }
+        .btn-menu.principal .btn-inner {
+            background: linear-gradient(135deg, #00ffcc, #00cc99);
+            color: #030a12;
+            box-shadow: 0 4px 20px rgba(0,255,204,0.3), 0 0 0 1px rgba(0,255,204,0.4);
+        }
+        .btn-menu.principal:active .btn-inner { transform: scale(0.97); box-shadow: 0 2px 10px rgba(0,255,204,0.2); }
+        .btn-menu.heroes .btn-inner {
+            background: rgba(255,0,85,0.08);
+            border: 1px solid rgba(255,0,85,0.4);
+            color: #ff4477;
+            box-shadow: 0 0 15px rgba(255,0,85,0.1);
+        }
+        .btn-menu.heroes:active .btn-inner { background: rgba(255,0,85,0.15); }
+
+        /* BOTÓN EUD */
+        .btn-menu.eud .btn-inner {
+            background: rgba(255,204,0,0.07);
+            border: 1px solid rgba(255,204,0,0.35);
+            color: var(--neon-gold);
+            box-shadow: 0 0 15px rgba(255,204,0,0.1);
+        }
+        .btn-menu.eud:active .btn-inner { background: rgba(255,204,0,0.14); }
+
+        .btn-menu.ajustes .btn-inner {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #7080a0;
+        }
+        .btn-menu.ajustes:active .btn-inner { background: rgba(255,255,255,0.07); }
+        .version-tag {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 10px;
+            color: #2a3050;
+            letter-spacing: 2px;
+            margin-top: auto;
+            padding-bottom: 12px;
+        }
+
+        /* ─── SELECCIÓN DE HÉROE ─── */
+        #seleccion {
+            background: linear-gradient(180deg, #08091a 0%, #050810 100%);
+            padding: 0;
+            justify-content: flex-start;
+        }
+        .seleccion-header {
+            width: 100%;
+            padding: 22px 20px 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .seleccion-header h2 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            color: var(--neon-cyan);
+        }
+        .hero-counter {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 10px;
+            color: #3a4a6a;
+            letter-spacing: 1px;
+        }
+        .hero-carousel {
+            width: 100%;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero-slides {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .hero-slide {
+            min-width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 20px;
+            position: relative;
+        }
+        .hero-slide[data-color="cyan"]::before  { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 40%, rgba(0,255,204,0.07) 0%, transparent 70%); }
+        .hero-slide[data-color="pink"]::before  { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 40%, rgba(255,0,150,0.08) 0%, transparent 70%); }
+        .hero-slide[data-color="gold"]::before  { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 40%, rgba(255,200,0,0.07) 0%, transparent 70%); }
+        .hero-slide[data-color="purple"]::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 40%, rgba(140,0,255,0.08) 0%, transparent 70%); }
+        .slide-img-wrap {
+            width: 170px;
+            height: 200px;
+            position: relative;
+            margin-bottom: 12px;
+            flex-shrink: 0;
+        }
+        .slide-img-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            filter: drop-shadow(0 0 25px var(--hero-color, rgba(0,255,204,0.4)));
+            position: relative;
+            z-index: 1;
+            animation: heroFloat 3s ease-in-out infinite;
+        }
+        .slide-img-wrap::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 50%;
+            transform: translateX(-50%);
+            width: 100px; height: 18px;
+            background: radial-gradient(ellipse, var(--hero-color, rgba(0,255,204,0.3)), transparent);
+            border-radius: 50%;
+            animation: shadowPulse 3s ease-in-out infinite;
+        }
+        .hero-info {
+            width: 100%;
+            position: relative;
+            z-index: 1;
+        }
+        .hero-name-row {
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+            margin-bottom: 6px;
+        }
+        .hero-name {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 22px;
+            font-weight: 900;
+            letter-spacing: 2px;
+            color: #fff;
+        }
+        .hero-class-badge {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            padding: 2px 8px;
+            border-radius: 20px;
+            text-transform: uppercase;
+        }
+        .hero-desc {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 13px;
+            font-weight: 400;
+            color: #8090b0;
+            line-height: 1.5;
+            margin-bottom: 10px;
+        }
+        .hero-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+        .stat-row {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+        .stat-label {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: #3a4a6a;
+            text-transform: uppercase;
+        }
+        .stat-bar-wrap {
+            height: 3px;
+            background: rgba(255,255,255,0.06);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .stat-bar {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.5s ease;
+        }
+        .hero-abilities {
+            display: flex;
+            gap: 6px;
+        }
+        .ability-tag {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            padding: 3px 8px;
+            border-radius: 4px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            color: #6070a0;
+        }
+        .carousel-dots {
+            display: flex;
+            gap: 6px;
+            padding: 8px 0;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .dot {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: #1a2040;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        .dot.active {
+            width: 20px;
+            border-radius: 3px;
+        }
+        .carousel-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 32px; height: 32px;
+            background: rgba(10,13,26,0.8);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 10;
+            font-size: 12px;
+            color: #4a5a7a;
+            transition: all 0.2s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .carousel-arrow:active { background: rgba(30,35,60,0.9); color: white; }
+        .carousel-arrow.left { left: 8px; }
+        .carousel-arrow.right { right: 8px; }
+        .seleccion-footer {
+            width: 100%;
+            padding: 8px 20px 16px;
+            flex-shrink: 0;
+        }
+        .btn-confirmar {
+            width: 100%;
+            background: linear-gradient(135deg, #00ffcc, #00cc99);
+            border: none;
+            color: #030a12;
+            padding: 13px 0;
+            border-radius: 8px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(0,255,204,0.25);
+            transition: all 0.2s;
+        }
+        .btn-confirmar:active { transform: scale(0.98); }
+        /* ─── CONFIGURACIÓN ─── */
+        #configuracion {
+            background: linear-gradient(180deg, #08091a 0%, #050810 100%);
+            overflow-y: auto;
+            padding: 0;
+            justify-content: flex-start;
+        }
+        .config-header {
+            width: 100%;
+            padding: 22px 20px 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            flex-shrink: 0;
+        }
+        .config-header h2 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 12px;
+            letter-spacing: 4px;
+            color: #4a5a7a;
+        }
+        .config-section {
+            width: 100%;
+            padding: 12px 20px;
+        }
+        .config-section-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 8px;
+            letter-spacing: 3px;
+            color: #2a3a5a;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+        .config-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.05);
+            padding: 10px 14px;
+            border-radius: 8px;
+            margin-bottom: 6px;
+        }
+        .config-item-label { font-size: 13px; font-weight: 600; letter-spacing: 0.5px; color: #c0cce0; }
+        .config-label-dinamico { font-size: 10px; color: var(--neon-cyan); font-weight: 600; margin-top: 1px; }
+        input[type=range] {
+            accent-color: var(--neon-pink);
+            width: 100px;
+            cursor: pointer;
+        }
+        .toggle-switch {
+            position: relative;
+            width: 36px;
+            height: 20px;
+        }
+        .toggle-switch input { display: none; }
+        .toggle-slider {
+            position: absolute;
+            inset: 0;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: 0.3s;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .toggle-slider::after {
+            content: '';
+            position: absolute;
+            left: 3px; top: 50%;
+            transform: translateY(-50%);
+            width: 13px; height: 13px;
+            background: #4a5a7a;
+            border-radius: 50%;
+            transition: 0.3s;
+        }
+        .toggle-switch input:checked + .toggle-slider { background: rgba(0,255,204,0.2); border-color: rgba(0,255,204,0.4); }
+        .toggle-switch input:checked + .toggle-slider::after { left: calc(100% - 16px); background: var(--neon-cyan); box-shadow: 0 0 6px var(--neon-cyan); }
+        .btn-hud {
+            width: calc(100% - 40px);
+            margin: 0 20px 10px;
+            background: rgba(255,204,0,0.05);
+            border: 1px solid rgba(255,204,0,0.25);
+            color: var(--neon-gold);
+            padding: 11px 0;
+            border-radius: 8px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .btn-hud:active { background: rgba(255,204,0,0.1); }
+        .btn-volver {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.07);
+            color: #3a4a6a;
+            padding: 10px 30px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 10px;
+            letter-spacing: 2px;
+            transition: 0.2s;
+            margin: auto 0 16px;
+        }
+        .btn-volver:active { color: white; border-color: rgba(255,255,255,0.2); }
+
+        /* ─── EDICIÓN HUD ─── */
+        #edicion-hud {
+            background: #08091a;
+            justify-content: flex-start;
+            padding: 20px;
+            gap: 12px;
+        }
+        #edicion-hud h2 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 12px;
+            letter-spacing: 3px;
+            color: var(--neon-gold);
+        }
+        #edicion-hud p {
+            font-size: 12px;
+            color: #5a6a8a;
+            text-align: center;
+            line-height: 1.5;
+        }
+        .zona-simulacion {
+            width: 100%;
+            flex: 1;
+            background: rgba(0,0,0,0.4);
+            border: 1px dashed rgba(255,255,255,0.08);
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+        .guia-texto {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%,-50%);
+            font-family: 'Orbitron', sans-serif;
+            font-size: 10px;
+            letter-spacing: 4px;
+            color: rgba(255,255,255,0.04);
+            pointer-events: none;
+        }
+        .drag-control {
+            position: absolute;
+            cursor: grab;
+            touch-action: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        #drag-joystick {
+            width: 64px; height: 64px;
+            background: rgba(0,255,204,0.07);
+            border: 2px solid rgba(0,255,204,0.3);
+            border-radius: 50%;
+            left: 20px; top: 220px;
+        }
+        .pivote-interno {
+            width: 24px; height: 24px;
+            background: rgba(0,255,204,0.2);
+            border: 1px solid rgba(0,255,204,0.5);
+            border-radius: 50%;
+        }
+        #drag-botones {
+            gap: 8px;
+            right: initial;
+            left: 215px; top: 230px;
+        }
+        .circulo-sub {
+            width: 36px; height: 36px;
+            background: rgba(255,0,85,0.1);
+            border: 1px solid rgba(255,0,85,0.4);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 8px;
+            color: #ff4477;
+        }
+        #drag-pausa {
+            width: 52px; height: 22px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 4px;
+            left: 245px; top: 30px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 7px;
+            letter-spacing: 1px;
+            color: #4a5a7a;
+        }
+        .hud-footer {
+            width: 100%;
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        .btn-restaurar {
+            flex: 1;
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.08);
+            color: #4a5a7a;
+            padding: 10px 0;
+            border-radius: 8px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 9px;
+            letter-spacing: 1px;
+            cursor: pointer;
+        }
+        .btn-guardar-hud {
+            flex: 1.5;
+            background: rgba(0,255,204,0.08);
+            border: 1px solid rgba(0,255,204,0.3);
+            color: var(--neon-cyan);
+            padding: 10px 0;
+            border-radius: 8px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 9px;
+            letter-spacing: 1px;
+            cursor: pointer;
+        }
+
+        /* ══════════════════════════════════════════
+           ─── METAL SLUG HERO REVEAL OVERLAY ───
+        ══════════════════════════════════════════ */
+        #metal-slug-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            opacity: 0;
+        }
+        #metal-slug-overlay.active {
+            pointer-events: all;
+        }
+
+        /* Fondo de flash */
+        .ms-flash {
+            position: absolute;
+            inset: 0;
+            background: white;
+            opacity: 0;
+            border-radius: 28px;
+            animation: none;
+        }
+        @keyframes msFlash {
+            0%   { opacity: 0.9; }
+            100% { opacity: 0; }
+        }
+
+        /* Scanlines dramáticas */
+        .ms-scanlines {
+            position: absolute;
+            inset: 0;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(0,0,0,0.15) 2px,
+                rgba(0,0,0,0.15) 4px
+            );
+            opacity: 0;
+            border-radius: 28px;
+            pointer-events: none;
+        }
+/* Panel de fondo oscuro */
+        .ms-bg {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, #000005 0%, #0a0020 40%, #000005 100%);
+            opacity: 0;
+            border-radius: 28px;
+        }
+
+        /* Marco de selección tipo arcade */
+        .ms-frame {
+            position: absolute;
+            width: 300px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            opacity: 0;
+            transform: scale(0.8);
+        }
+
+        .ms-top-bar {
+            width: 100%;
+            background: linear-gradient(90deg, transparent, var(--ms-color, #00ffcc), transparent);
+            height: 2px;
+            margin-bottom: 8px;
+            opacity: 0.8;
+        }
+        .ms-bottom-bar {
+            width: 100%;
+            background: linear-gradient(90deg, transparent, var(--ms-color, #00ffcc), transparent);
+            height: 2px;
+            margin-top: 8px;
+            opacity: 0.8;
+        }
+
+        .ms-label-player {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 10px;
+            letter-spacing: 5px;
+            color: var(--ms-color, #00ffcc);
+            opacity: 0.7;
+            margin-bottom: 4px;
+        }
+
+        .ms-hero-portrait {
+            width: 180px;
+            height: 220px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .ms-hero-portrait img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            position: relative;
+            z-index: 2;
+            filter: drop-shadow(0 0 30px var(--ms-color, rgba(0,255,204,0.6)));
+        }
+
+        /* Partículas de energía */
+        .ms-particles {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 1;
+        }
+        .ms-particle {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            border-radius: 50%;
+            background: var(--ms-color, #00ffcc);
+            opacity: 0;
+        }
+
+        /* Nombre del héroe */
+        .ms-hero-name {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 28px;
+            font-weight: 900;
+            letter-spacing: 4px;
+            color: #fff;
+            text-shadow: 0 0 20px var(--ms-color, #00ffcc), 0 0 40px var(--ms-color, #00ffcc);
+            margin-top: 8px;
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        .ms-hero-class {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 6px;
+            color: var(--ms-color, #00ffcc);
+            opacity: 0;
+            margin-top: 4px;
+            transform: translateY(6px);
+        }
+
+        /* Texto SELECTED */
+        .ms-selected-text {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 8px;
+            color: var(--ms-color, #00ffcc);
+            opacity: 0;
+            margin-top: 12px;
+            animation: none;
+        }
+        @keyframes msSelectedBlink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        /* Barras de poder */
+        .ms-power-bars {
+            display: flex;
+            gap: 4px;
+            margin-top: 10px;
+            opacity: 0;
+        }
+        .ms-power-bar {
+            width: 16px;
+            height: 6px;
+            background: var(--ms-color, #00ffcc);
+            border-radius: 1px;
+            box-shadow: 0 0 6px var(--ms-color, #00ffcc);
+        }
+
+        /* Corner decorations */
+        .ms-corner {
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            border-color: var(--ms-color, #00ffcc);
+            border-style: solid;
+            opacity: 0.5;
+        }
+        .ms-corner.tl { top: 0; left: 0; border-width: 2px 0 0 2px; }
+        .ms-corner.tr { top: 0; right: 0; border-width: 2px 2px 0 0; }
+        .ms-corner.bl { bottom: 0; left: 0; border-width: 0 0 2px 2px; }
+        .ms-corner.br { bottom: 0; right: 0; border-width: 0 2px 2px 0; }
+
+        /* ══════════════════════════════════════════
+           ─── PANTALLA ARCHIVOS E.U.D. ───
+        ══════════════════════════════════════════ */
+        #archivos-eud {
+            background: linear-gradient(180deg, #080912 0%, #04060f 100%);
+            padding: 0;
+            justify-content: flex-start;
+            overflow: hidden;
+        }
+
+        .eud-header {
+            width: 100%;
+            padding: 18px 20px 12px;
+            border-bottom: 1px solid rgba(255,204,0,0.12);
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .eud-header-left { display: flex; flex-direction: column; gap: 2px; }
+        .eud-eyebrow {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 8px;
+            letter-spacing: 4px;
+            color: rgba(255,204,0,0.5);
+        }
+        .eud-header h2 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 14px;
+            font-weight: 900;
+            letter-spacing: 3px;
+            color: var(--neon-gold);
+            text-shadow: 0 0 15px rgba(255,204,0,0.4);
+        }
+        .eud-classification {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 9px;
+            letter-spacing: 2px;
+            color: rgba(255,80,80,0.7);
+            border: 1px solid rgba(255,80,80,0.3);
+            padding: 2px 8px;
+            border-radius: 3px;
+        }
+
+        /* Tabs de héroes */
+        .eud-tabs {
+            display: flex;
+            width: 100%;
+            padding: 10px 16px 0;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+        .eud-tab {
+            flex: 1;
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-bottom: none;
+            color: #3a4a6a;
+            padding: 7px 4px;
+            border-radius: 6px 6px 0 0;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 8px;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .eud-tab.active {
+            background: rgba(255,255,255,0.04);
+            border-color: rgba(255,255,255,0.15);
+            color: white;
+        }
+
+        /* Contenido de ficha */
+        .eud-content {
+            width: 100%;
+            flex: 1;
+            overflow-y: auto;
+            padding: 0 16px 16px;
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+            background: rgba(255,255,255,0.015);
+            border-top: 1px solid rgba(255,255,255,0.08);
+        }
+        .eud-content.active {
+            display: flex;
+        }
+        .eud-content::-webkit-scrollbar { width: 3px; }
+        .eud-content::-webkit-scrollbar-track { background: transparent; }
+        .eud-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+
+        /* Ficha de héroe */
+        .eud-hero-card {
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 12px;
+            position: relative;
+        }
+
+        .eud-card-top {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            padding: 14px;
+            background: rgba(255,255,255,0.025);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 10px 10px 0 0;
+            position: relative;
+            overflow: hidden;
+        }
+        .eud-card-top::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            opacity: 0.04;
+            background: repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 10px,
+                rgba(255,255,255,0.5) 10px,
+                rgba(255,255,255,0.5) 11px
+            );
+            pointer-events: none;
+        }
+
+        .eud-portrait-wrap {
+            width: 80px;
+            height: 100px;
+            flex-shrink: 0;
+            position: relative;
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .eud-portrait-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            object-position: top;
+        }
+        .eud-portrait-overlay {
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 30px;
+            background: linear-gradient(transparent, rgba(0,0,0,0.6));
+        }
+
+        .eud-card-info { flex: 1; }
+        .eud-id-badge {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 8px;
+            letter-spacing: 2px;
+            color: rgba(255,255,255,0.3);
+            margin-bottom: 4px;
+        }
+        .eud-card-name {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 18px;
+            font-weight: 900;
+            letter-spacing: 2px;
+            color: #fff;
+            line-height: 1;
+            margin-bottom: 3px;
+        }
+        .eud-card-role {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            padding: 2px 8px;
+            border-radius: 20px;
+            display: inline-block;
+            margin-bottom: 8px;
+        }
+        .eud-card-bio {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 11px;
+            color: #6a7a9a;
+            line-height: 1.5;
+        }
+
+        /* Estadísticas en ficha */
+        .eud-stats-block {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-top: none;
+            border-radius: 0;
+            padding: 10px 14px;
+        }
+        .eud-stats-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 8px;
+            letter-spacing: 3px;
+            color: #2a3a5a;
+            margin-bottom: 8px;
+        }
+        .eud-stat-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 5px;
+        }
+        .eud-stat-name {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            color: #5a6a8a;
+            width: 70px;
+            flex-shrink: 0;
+            text-transform: uppercase;
+        }
+        .eud-stat-bar-wrap {
+            flex: 1;
+            height: 4px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .eud-stat-bar-fill {
+            height: 100%;
+            border-radius: 2px;
+        }
+        .eud-stat-val {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 9px;
+            color: #3a4a6a;
+            width: 22px;
+            text-align: right;
+            flex-shrink: 0;
+        }
+/* Habilidades */
+        .eud-abilities-block {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-top: none;
+            border-radius: 0 0 10px 10px;
+            padding: 10px 14px;
+        }
+        .eud-abilities-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 8px;
+            letter-spacing: 3px;
+            color: #2a3a5a;
+            margin-bottom: 8px;
+        }
+        .eud-ability-btn {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 8px;
+            padding: 10px 12px;
+            margin-bottom: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+        }
+        .eud-ability-btn:last-child { margin-bottom: 0; }
+        .eud-ability-btn:active { background: rgba(255,255,255,0.06); }
+        .eud-ability-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+        .eud-ability-text { flex: 1; }
+        .eud-ability-name {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            color: #d0ddf0;
+            margin-bottom: 2px;
+        }
+        .eud-ability-type {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 10px;
+            letter-spacing: 2px;
+            color: #3a4a6a;
+        }
+        .eud-ability-arrow {
+            font-size: 12px;
+            color: #2a3a5a;
+        }
+
+        /* Footer con botón volver */
+        .eud-footer {
+            width: 100%;
+            padding: 10px 16px 14px;
+            flex-shrink: 0;
+        }
+
+        /* ══════════════════════════════════════════
+           ─── MODAL DE HABILIDAD ───
+        ══════════════════════════════════════════ */
+        #ability-modal {
+            position: absolute;
+            inset: 0;
+            z-index: 500;
+            display: flex;
+            align-items: flex-end;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        #ability-modal.open {
+            opacity: 1;
+            pointer-events: all;
+        }
+        .modal-backdrop {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.75);
+            backdrop-filter: blur(4px);
+            border-radius: 28px;
+        }
+        .modal-sheet {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            background: linear-gradient(180deg, #0d1025 0%, #080c1e 100%);
+            border-radius: 20px 20px 0 0;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            padding: 0 0 24px;
+            transform: translateY(100%);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            max-height: 75%;
+            overflow-y: auto;
+        }
+        #ability-modal.open .modal-sheet {
+            transform: translateY(0);
+        }
+        .modal-handle {
+            width: 36px;
+            height: 3px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 2px;
+            margin: 12px auto 16px;
+        }
+        .modal-hero-accent {
+            width: 100%;
+            height: 2px;
+            margin-bottom: 0;
+        }
+        .modal-header {
+            padding: 16px 20px 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .modal-ability-tag {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 8px;
+            letter-spacing: 4px;
+            margin-bottom: 4px;
+        }
+        .modal-ability-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 18px;
+            font-weight: 900;
+            letter-spacing: 2px;
+            color: #fff;
+            margin-bottom: 6px;
+        }
+        .modal-icon-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .modal-big-icon {
+            font-size: 28px;
+        }
+        .modal-subtitle {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 11px;
+            letter-spacing: 2px;
+            color: #4a5a7a;
+        }
+        .modal-body {
+            padding: 16px 20px;
+        }
+        .modal-section-label {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 8px;
+            letter-spacing: 3px;
+            color: #2a3a5a;
+            margin-bottom: 6px;
+            margin-top: 12px;
+        }
+        .modal-section-label:first-child { margin-top: 0; }
+        .modal-text {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 13px;
+            color: #8090b0;
+            line-height: 1.65;
+        }
+        .modal-origin-quote {
+            background: rgba(255,255,255,0.03);
+            border-left: 2px solid;
+            padding: 10px 14px;
+            border-radius: 0 6px 6px 0;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 12px;
+            font-style: italic;
+            color: #6070a0;
+            line-height: 1.6;
+            margin-top: 8px;
+        }
+        .modal-close-btn {
+            width: calc(100% - 40px);
+            margin: 0 20px;
+            padding: 11px 0;
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 8px;
+            color: #3a4a6a;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 10px;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .modal-close-btn:active { color: white; border-color: rgba(255,255,255,0.2); }
+
+
+        /* Imagen de habilidad en modal */
+        .modal-ability-img {
+            width: 100%;
+            max-height: 160px;
+            object-fit: contain;
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(0,0,0,0.3);
+            display: block;
+            margin-bottom: 4px;
+        }
+        .modal-ability-img-wrap {
+            width: 100%;
+            margin-bottom: 8px;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(0,0,0,0.25);
+        }
+        .modal-ability-img-wrap.hidden { display: none; }
+        .modal-img-placeholder {
+            width: 100%;
+            height: 120px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            background: rgba(255,255,255,0.02);
+            border-radius: 10px;
+        }
+        .placeholder-icon { font-size: 28px; opacity: 0.3; }
+        .placeholder-text {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 9px;
+            letter-spacing: 3px;
+            color: rgba(255,255,255,0.25);
+        }
+        .placeholder-sub {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 10px;
+            color: rgba(255,255,255,0.15);
+            letter-spacing: 1px;
+        }
+        /* Scrollbar modal */
+        .modal-sheet::-webkit-scrollbar { width: 3px; }
+        .modal-sheet::-webkit-scrollbar-track { background: transparent; }
+        .modal-sheet::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+
+
+        #inicio > * { position: relative; z-index: 1; }
+
+        /* ── PANTALLA DE CARGA ── */
+        #pantalla-carga {
+            position: absolute;
+            inset: 0;
+            z-index: 9000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #02020a;
+            border-radius: 28px;
+            transition: opacity 0.6s ease;
+        }
+        #pantalla-carga.oculta {
+            opacity: 0;
+            pointer-events: none;
+        }
+        .carga-img-wrap {
+            width: 100%;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        .carga-img-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+            border-radius: 28px 28px 0 0;
+        }
+        .carga-bottom {
+            width: 100%;
+            padding: 20px 30px 28px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 14px;
+            background: linear-gradient(180deg, transparent 0%, #02020a 30%);
+            position: relative;
+        }
+        .carga-barra-wrap {
+            width: 100%;
+            height: 3px;
+            background: rgba(255,255,255,0.06);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .carga-barra-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #00cc99, #00ffcc);
+            border-radius: 2px;
+            box-shadow: 0 0 8px rgba(0,255,204,0.5);
+            transition: width 0.1s linear;
+        }
+        .carga-label {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 9px;
+            letter-spacing: 4px;
+            color: rgba(0,255,204,0.5);
+        }
+        #btn-continuar {
+            display: none;
+            width: 100%;
+            background: linear-gradient(135deg, #00ffcc, #00cc99);
+            border: none;
+            color: #030a12;
+            padding: 14px 0;
+            border-radius: 8px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            cursor: pointer;
+            box-shadow: 0 4px 24px rgba(0,255,204,0.35);
+            animation: pulseContinuar 1.5s ease-in-out infinite;
+        }
+        #btn-continuar.visible { display: block; }
+        @keyframes pulseContinuar {
+            0%, 100% { box-shadow: 0 4px 24px rgba(0,255,204,0.35); }
+            50% { box-shadow: 0 4px 40px rgba(0,255,204,0.65); }
+        }
+    </style>
+</head>
+<body>
+
+<div id="pantalla-juego">
+
+    <!-- ══════════ PANTALLA DE CARGA ══════════ -->
+    <div id="pantalla-carga">
+        <div class="carga-img-wrap">
+            <img src="imagencarga.png" alt="Cargando...">
+        </div>
+        <div class="carga-bottom">
+            <div class="carga-barra-wrap">
+                <div class="carga-barra-fill" id="carga-barra"></div>
+            </div>
+            <div class="carga-label" id="carga-label">CARGANDO...</div>
+            <button id="btn-continuar" onclick="continuarAlMenu()">▶ &nbsp;CONTINUAR</button>
+        </div>
+    </div>
+
+    <!-- ══════════ MENÚ PRINCIPAL ══════════ -->
+    <div id="inicio" class="pantalla activa">
+        <div class="logo-area">
+            <div class="logo-eyebrow">E.U.D</div>
+            <div class="logo-title">
+                AVENTURA DE
+                <span>DIMENSIONES</span>
+            </div>
+            <div class="logo-line"></div>
+        </div>
+
+        <div class="hero-preview">
+            <img id="preview-hero-main" src="brandon.png" alt="Héroe">
+        </div>
+
+        <div class="menu-botones">
+            <button class="btn-menu principal" onclick="iniciarPartida()">
+                <div class="btn-inner">
+                    <span class="btn-icon">▶</span> JUGAR
+                </div>
+            </button>
+            <button class="btn-menu heroes" onclick="irA('seleccion')">
+                <div class="btn-inner">
+                    <span class="btn-icon">⚔</span> SELECCIÓN DE HÉROE
+                </div>
+            </button>
+            <button class="btn-menu eud" onclick="irA('archivos-eud')">
+                <div class="btn-inner">
+                    <span class="btn-icon">📁</span> ARCHIVOS DE LA E.U.D
+                </div>
+            </button>
+            <button class="btn-menu ajustes" onclick="irA('configuracion')">
+                <div class="btn-inner">
+                    <span class="btn-icon">⚙</span> CONFIGURACIÓN
+                </div>
+            </button>
+        </div>
+
+        <div class="version-tag">V 1.0.0|BRCG</div>
+    </div>
+<!-- ══════════ SELECCIÓN DE HÉROE ══════════ -->
+    <div id="seleccion" class="pantalla">
+        <div class="seleccion-header">
+            <h2>ELIGE TU HÉROE</h2>
+            <span class="hero-counter" id="hero-counter">1 / 4</span>
+        </div>
+
+        <div class="hero-carousel">
+            <div class="hero-slides" id="hero-slides">
+
+                <!-- Brandon -->
+                <div class="hero-slide" data-hero="Brandon" data-color="cyan">
+                    <div class="slide-img-wrap" style="--hero-color: rgba(0,255,204,0.4)">
+                        <img src="brandon.png" alt="Brandon">
+                    </div>
+                    <div class="hero-info">
+                        <div class="hero-name-row">
+                            <span class="hero-name">BRANDON</span>
+                            <span class="hero-class-badge" style="background:rgba(0,255,204,0.12);color:#00ffcc;border:1px solid rgba(0,255,204,0.3)">CAPITAN DE LA NAVE APOCALIPTO</span>
+                        </div>
+                        <div class="hero-desc">Reclutado para poner orden e inteligencia a nuestra faccion pero no obedece a los altos mandos, esta en constante vigilancia por miedo a que se revele contra nosotros, estoy muy seguro que a la primera que pudiera eliminaria a la E.U.D.</div>
+                        <div class="hero-stats">
+                            <div class="stat-row">
+                                <span class="stat-label">FUERZA</span>
+                                <div class="stat-bar-wrap"><div class="stat-bar" style="width:85%;background:#00ffcc"></div></div>
+                            </div>
+                            <div class="stat-row">
+                                <span class="stat-label">VELOCIDAD</span>
+                                <div class="stat-bar-wrap"><div class="stat-bar" style="width:70%;background:#00ffcc"></div></div>
+                            </div>
+                            <div class="stat-row">
+                                <span class="stat-label">DEFENSA</span>
+                                <div class="stat-bar-wrap"><div class="stat-bar" style="width:75%;background:#00ffcc"></div></div>
+                            </div>
+                            <div class="stat-row">
+                                <span class="stat-label">ESPECIAL</span>
+                                <div class="stat-bar-wrap"><div class="stat-bar" style="width:85%;background:#00ffcc"></div></div>
+                            </div>
+                        </div>
+                        <div class="hero-abilities">
+                            <span class="ability-tag">BLASTERCOOL</span>
+                            <span class="ability-tag">GARRA FELINA</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Kleydi -->
+                <div class="hero-slide" data-hero="Kleydi" data-color="pink">
+                    <div class="slide-img-wrap" style="--hero-color: rgba(255,0,150,0.4)">
+                        <img src="kleydi.png" alt="Kleydi">
+                    </div>
+                    <div class="hero-info">
+                        <div class="hero-name-row">
+                            <span class="hero-name">KLEYDI</span>
+                            <span class="hero-class-badge" style="background:rgba(255,0,150,0.12);color:#ff4499;border:1px solid rgba(255,0,150,0.3)">CAPITANA DE LA NAVE GENESIS</span>
+                        </div>
+                        <div class="hero-desc">No podemos confundirnos por su aspecto es una capitana muy perfeccionista, renegada y altamente preparada se le dio a cargo la nave Genesis como muestra de la primera capitana de nuestra faccio.</div>
+                        <div class="hero-stats">
+                            <div class="stat-row">
+                                <span class="stat-label">FUERZA</span>
+                                <div class="stat-bar-wrap"><div class="stat-bar" style="width:75%;background:#ff4499"></div></div>
+                            </div>
+                            <div class="stat-row">
+                                <span class="stat-label">VELOCIDAD</span>
+                                <div class="stat-bar-wrap"><div class="stat-bar" style="width:75%;background:#ff4499"></div></div>
+                            </div>
+                            <div class="stat-row">
+                                <span class="stat-label">DEFENSA</span>
+                                <div class="stat-bar-wrap"><div class="stat-bar" style="width:70%;background:#ff4499"></div></div>
+                            </div>
+                            <div class="stat-row">
+                                <span class="stat-label">ESPECIAL</span>
+                                <div class="stat-bar-wrap"><div class="stat-bar" style="width:95%;background:#ff4499"></div></div>
+                            </div>
+                        </div>
+                        <div class="hero-abilities">
+                            <span class="ability-tag">CUTE BOMB</span>
+                            <span class="ability-tag">MISIL LADRIDO</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Nahomy -->
+                <div class="hero-slide" data-hero="Nahomy" data-color="gold">
+                    <div class="slide-img-wrap" style="--hero-color: rgba(255,200,0,0.4)">
+                        <img src="nahomy.png" alt="Nahomy">
+                    </div>
+                    <div class="hero-info">
+                        <div class="hero-name-row">
+                            <span class="hero-name">NAHOMY</span>
+                            <span class="hero-class-badge" style="background:rgba(255,200,0,0.12);color:#ffcc00;border:1px solid rgba(255,200,0,0.3)">ASPIRANTE A CAPITANA</span>
+                        </div>
+                        <div class="hero-desc">En busca de nuevos reclutas el capitan de la nave apocalipto la encontro perdida la trajo con nosotros y vimos su potencial, es aspirante a poseer la nave Fenix aunque por ahora solo es una niña.</div>
+                        <div class="hero-stats">
+                            <div class="stat-row">
+                                <span class="stat-label">FUERZA</span>
+                                <div class="stat-bar-wrap"><div class="stat-bar" style="width:65%;background:#ffcc00"></div></div>
+                            </div>
+                            <div class="stat-row">
+                                <span class="stat-label">VELOCIDAD</span>
+                                <div class="stat-bar-wrap"><div class="stat-bar" style="width:80%;background:#ffcc00"></div></div>
+                            </div>
+                            <div class="stat-row">
+                                <span class="stat-label">DEFENSA</span>
+                                <div class="stat-bar-wrap"><div class="stat-bar" style="width:90%;background:#ffcc00"></div></div>
+                            </div>
+                            <div class="stat-row">
+                                <span class="stat-label">ESPECIAL</span>
+                                <div class="stat-bar-wrap"><div class="stat-bar" style="width:78%;background:#ffcc00"></div></div>
+                            </div>
+                        </div>
+                        <div class="hero-abilities">
+                            <span class="ability-tag">BOMBA LIMON</span>
+                            <span class="ability-tag">GOLPE OSO</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- C-J -->
+                <div class="hero-slide" data-hero="C-J" data-color="purple">
+                    <div class="slide-img-wrap" style="--hero-color: rgba(140,0,255,0.4)">
+                        <img src="cj.png" alt="C-J">
+                    </div>
+                    <div class="hero-info">
+                        <div class="hero-name-row">
+                            <span class="hero-name">C-J</span>
+                            <span class="hero-class-badge" style="background:rgba(140,0,255,0.12);color:#aa44ff;border:1px solid rgba(140,0,255,0.3)">RECLUTAS ESTRELLA</span>
+                        </div>
+                        <div class="hero-desc">Por ahora son mejores como aliados son unos hermanos problematicos, se infiltraron y desglosaron nuestros archivos ahora saben mucho sobre nosotros evitaremos a toda costa que hablen con Brandon.</div>
+                        <div class="hero-stats">
+                            <div class="stat-row">
+                                <span class="stat-label">FUERZA</span>
+                                <div class="stat-bar-wrap"><div class="stat-bar" style="width:90%;background:#aa44ff"></div></div>
+                            </div>
+                            <div class="stat-row">
+                                <span class="stat-label">VELOCIDAD</span>
+                                <div class="stat-bar-wrap"><div class="stat-bar" style="width:85%;background:#aa44ff"></div></div>
+                            </div>
+                            <div class="stat-row">
+                                <span class="stat-label">DEFENSA</span>
+                                <div class="stat-bar-wrap"><div class="stat-bar" style="width:75%;background:#aa44ff"></div></div>
+                            </div>
+                            <div class="stat-row">
+                                <span class="stat-label">ESPECIAL</span>
+                                <div class="stat-bar-wrap"><div class="stat-bar" style="width:92%;background:#aa44ff"></div></div>
+                            </div>
+                        </div>
+                        <div class="hero-abilities">
+                            <span class="ability-tag">PULSO EMP</span>
+                            <span class="ability-tag">DOBLE LADRIDO</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Arrows -->
+            <div class="carousel-arrow left" onclick="cambiarHeroe(-1)">◀</div>
+            <div class="carousel-arrow right" onclick="cambiarHeroe(1)">▶</div>
+        </div>
+
+        <div class="carousel-dots">
+            <div class="dot active" onclick="irASlide(0)"></div>
+            <div class="dot" onclick="irASlide(1)"></div>
+            <div class="dot" onclick="irASlide(2)"></div>
+            <div class="dot" onclick="irASlide(3)"></div>
+        </div>
+
+        <div class="seleccion-footer">
+            <button class="btn-confirmar" onclick="confirmarHeroe()">✔ SELECCIONAR HÉROE</button>
+        </div>
+    </div>
+
+    <!-- ══════════ ARCHIVOS E.U.D. ══════════ -->
+    <div id="archivos-eud" class="pantalla">
+        <div class="eud-header">
+            <div class="eud-header-left">
+                <div class="eud-eyebrow">ESTACION UNIVERSAL DE DEFENSA</div>
+                <h2>ARCHIVOS E.U.D</h2>
+            </div>
+            <div class="eud-classification">CLASIFICADO</div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="eud-tabs">
+            <button class="eud-tab active" onclick="cambiarFicha(0)" id="tab-0">BRANDON</button>
+            <button class="eud-tab" onclick="cambiarFicha(1)" id="tab-1">KLEYDI</button>
+            <button class="eud-tab" onclick="cambiarFicha(2)" id="tab-2">NAHOMY</button>
+            <button class="eud-tab" onclick="cambiarFicha(3)" id="tab-3">C-J</button>
+        </div>
+
+        <!-- FICHA BRANDON -->
+        <div class="eud-content active" id="ficha-0">
+            <div class="eud-hero-card">
+                <div class="eud-card-top">
+                    <div class="eud-portrait-wrap" style="background: rgba(0,255,204,0.05); border-color: rgba(0,255,204,0.2)">
+                        <img src="brandon.png" alt="Brandon">
+                        <div class="eud-portrait-overlay"></div>
+                    </div>
+                    <div class="eud-card-info">
+                        <div class="eud-id-badge">EUD-001·OPERATIVO CAPITAN PAYASO</div>
+                        <div class="eud-card-name">BRANDON</div>
+                        <div class="eud-card-role" style="background:rgba(0,255,204,0.1);color:#00ffcc;border:1px solid rgba(0,255,204,0.25)">JOKER</div>
+                        <div class="eud-card-bio">Recluta de la E.U.D. Su instinto de combate supera cualquier entrenamiento convencional durante el operativo capitan payaso solo podemos decir "gracias" .</div>
+                    </div>
+                </div>
+                <div class="eud-stats-block">
+                    <div class="eud-stats-title">ESTADÍSTICAS DE NAVE</div>
+                    <div class="eud-stat-row">
+                        <span class="eud-stat-name">FUERZA</span>
+                        <div class="eud-stat-bar-wrap"><div class="eud-stat-bar-fill" style="width:90%;background:linear-gradient(90deg,#00cc99,#00ffcc);box-shadow:0 0 6px rgba(0,255,204,0.4)"></div></div>
+                        <span class="eud-stat-val">90</span>
+                    </div>
+                    <div class="eud-stat-row">
+                        <span class="eud-stat-name">VELOCIDAD</span>
+                        <div class="eud-stat-bar-wrap"><div class="eud-stat-bar-fill" style="width:80%;background:linear-gradient(90deg,#00cc99,#00ffcc);box-shadow:0 0 6px rgba(0,255,204,0.4)"></div></div>
+                        <span class="eud-stat-val">70</span>
+                    </div>
+                    <div class="eud-stat-row">
+                        <span class="eud-stat-name">DEFENSA</span>
+                        <div class="eud-stat-bar-wrap"><div class="eud-stat-bar-fill" style="width:80%;background:linear-gradient(90deg,#00cc99,#00ffcc);box-shadow:0 0 6px rgba(0,255,204,0.4)"></div></div>
+                        <span class="eud-stat-val">80</span>
+                    </div>
+                    <div class="eud-stat-row">
+                        <span class="eud-stat-name">TRIPULACION</span>
+                        <div class="eud-stat-bar-wrap"><div class="eud-stat-bar-fill" style="width:85%;background:linear-gradient(90deg,#00cc99,#00ffcc);box-shadow:0 0 6px rgba(0,255,204,0.4)"></div></div>
+                        <span class="eud-stat-val">75</span>
+                    </div>
+                </div>
+                <div class="eud-abilities-block">
+                    <div class="eud-abilities-title">HABILIDADES REGISTRADAS</div>
+                    <button class="eud-ability-btn" onclick="abrirModal('brandon','pulso')" style="border-color:rgba(0,255,204,0.15)">
+                        <div class="eud-ability-icon" style="background:rgba(0,255,204,0.08);border:1px solid rgba(0,255,204,0.2)">☣️</div>
+                        <div class="eud-ability-text">
+                            <div class="eud-ability-name">BLASTERCOOL</div>
+                            <div class="eud-ability-type" style="color:#00ffcc;opacity:0.5">ESPECIAL</div>
+                        </div>
+                        <span class="eud-ability-arrow" style="color:rgba(0,255,204,0.3)">›</span>
+                    </button>
+                    <button class="eud-ability-btn" onclick="abrirModal('brandon','escudo')" style="border-color:rgba(0,255,204,0.15)">
+                        <div class="eud-ability-icon" style="background:rgba(0,255,204,0.08);border:1px solid rgba(0,255,204,0.2)">🛡</div>
+                        <div class="eud-ability-text">
+                            <div class="eud-ability-name">GARRA FELINA</div>
+                            <div class="eud-ability-type" style="color:#00ffcc;opacity:0.5">ATAQUE</div>
+                        </div>
+                        <span class="eud-ability-arrow" style="color:rgba(0,255,204,0.3)">›</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- FICHA KLEYDI -->
+        <div class="eud-content" id="ficha-1">
+            <div class="eud-hero-card">
+                <div class="eud-card-top">
+                    <div class="eud-portrait-wrap" style="background: rgba(255,0,150,0.05); border-color: rgba(255,0,150,0.2)">
+                        <img src="kleydi.png" alt="Kleydi">
+                        <div class="eud-portrait-overlay"></div>
+                    </div>
+                    <div class="eud-card-info">
+                        <div class="eud-id-badge">EUD-002 · OPERATIVO BETA</div>
+                        <div class="eud-card-name">KLEYDI</div>
+                        <div class="eud-card-role" style="background:rgba(255,0,150,0.1);color:#ff4499;border:1px solid rgba(255,0,150,0.25)">ALPHA</div>
+                        <div class="eud-card-bio">Tan habil como gruñona fue detectada desde temprana edad por los sensores de la E.U.D es la primera para nosotros.</div>
+                    </div>
+                </div>
+                <div class="eud-stats-block">
+                    <div class="eud-stats-title">ESTADÍSTICAS DE NAVE</div>
+                    <div class="eud-stat-row">
+                        <span class="eud-stat-name">FUERZA</span>
+                        <div class="eud-stat-bar-wrap"><div class="eud-stat-bar-fill" style="width:75%;background:linear-gradient(90deg,#cc0066,#ff4499);box-shadow:0 0 6px rgba(255,0,150,0.4)"></div></div>
+                        <span class="eud-stat-val">65</span>
+                    </div>
+                    <div class="eud-stat-row">
+                        <span class="eud-stat-name">VELOCIDAD</span>
+                        <div class="eud-stat-bar-wrap"><div class="eud-stat-bar-fill" style="width:85%;background:linear-gradient(90deg,#cc0066,#ff4499);box-shadow:0 0 6px rgba(255,0,150,0.4)"></div></div>
+                        <span class="eud-stat-val">85</span>
+                    </div>
+                    <div class="eud-stat-row">
+                        <span class="eud-stat-name">DEFENSA</span>
+                        <div class="eud-stat-bar-wrap"><div class="eud-stat-bar-fill" style="width:80%;background:linear-gradient(90deg,#cc0066,#ff4499);box-shadow:0 0 6px rgba(255,0,150,0.4)"></div></div>
+                        <span class="eud-stat-val">60</span>
+                    </div>
+                    <div class="eud-stat-row">
+                        <span class="eud-stat-name">TRIPULACION</span>
+                        <div class="eud-stat-bar-wrap"><div class="eud-stat-bar-fill" style="width:85%;background:linear-gradient(90deg,#cc0066,#ff4499);box-shadow:0 0 6px rgba(255,0,150,0.4)"></div></div>
+                        <span class="eud-stat-val">95</span>
+                    </div>
+                </div>
+                <div class="eud-abilities-block">
+                    <div class="eud-abilities-title">HABILIDADES REGISTRADAS</div>
+                    <button class="eud-ability-btn" onclick="abrirModal('kleydi','nova')" style="border-color:rgba(255,0,150,0.15)">
+                        <div class="eud-ability-icon" style="background:rgba(255,0,150,0.08);border:1px solid rgba(255,0,150,0.2)">🌸</div>
+                        <div class="eud-ability-text">
+                            <div class="eud-ability-name">CUTE BOMB</div>
+                            <div class="eud-ability-type" style="color:#ff4499;opacity:0.5">ATAQUE · EXPLOSIVO</div>
+                        </div>
+                        <span class="eud-ability-arrow" style="color:rgba(255,0,150,0.3)">›</span>
+                    </button>
+                    <button class="eud-ability-btn" onclick="abrirModal('kleydi','vortex')" style="border-color:rgba(255,0,150,0.15)">
+                        <div class="eud-ability-icon" style="background:rgba(255,0,150,0.08);border:1px solid rgba(255,0,150,0.2)">🌀</div>
+                        <div class="eud-ability-text">
+                            <div class="eud-ability-name">MISIL LADRIDO</div>
+                            <div class="eud-ability-type" style="color:#ff4499;opacity:0.5">CONTROL · CAMPO</div>
+                        </div>
+                        <span class="eud-ability-arrow" style="color:rgba(255,0,150,0.3)">›</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- FICHA NAHOMY -->
+        <div class="eud-content" id="ficha-2">
+            <div class="eud-hero-card">
+                <div class="eud-card-top">
+                    <div class="eud-portrait-wrap" style="background: rgba(255,200,0,0.05); border-color: rgba(255,200,0,0.2)">
+                        <img src="nahomy.png" alt="Nahomy">
+                        <div class="eud-portrait-overlay"></div>
+                    </div>
+                    <div class="eud-card-info">
+                        <div class="eud-id-badge">EUD-003 · OPERATIVA ROSE</div>
+                        <div class="eud-card-name">NAHOMY</div>
+                        <div class="eud-card-role" style="background:rgba(255,200,0,0.1);color:#ffcc00;border:1px solid rgba(255,200,0,0.25)">ESTRELLA</div>
+                        <div class="eud-card-bio">Mente prodigio de la E.U.D. Como olvidar ese dia cuando el capitan joker la trajo.</div>
+                    </div>
+                </div>
+                <div class="eud-stats-block">
+                    <div class="eud-stats-title">ESTADÍSTICAS DE NAVE</div>
+                    <div class="eud-stat-row">
+                        <span class="eud-stat-name">FUERZA</span>
+                        <div class="eud-stat-bar-wrap"><div class="eud-stat-bar-fill" style="width:55%;background:linear-gradient(90deg,#cc9900,#ffcc00);box-shadow:0 0 6px rgba(255,200,0,0.4)"></div></div>
+                        <span class="eud-stat-val">55</span>
+                    </div>
+                    <div class="eud-stat-row">
+                        <span class="eud-stat-name">VELOCIDAD</span>
+                        <div class="eud-stat-bar-wrap"><div class="eud-stat-bar-fill" style="width:80%;background:linear-gradient(90deg,#cc9900,#ffcc00);box-shadow:0 0 6px rgba(255,200,0,0.4)"></div></div>
+                        <span class="eud-stat-val">80</span>
+                    </div>
+                    <div class="eud-stat-row">
+                        <span class="eud-stat-name">DEFENSA</span>
+                        <div class="eud-stat-bar-wrap"><div class="eud-stat-bar-fill" style="width:80%;background:linear-gradient(90deg,#cc9900,#ffcc00);box-shadow:0 0 6px rgba(255,200,0,0.4)"></div></div>
+                        <span class="eud-stat-val">70</span>
+                    </div>
+                    <div class="eud-stat-row">
+                        <span class="eud-stat-name">TRIPULACION</span>
+                        <div class="eud-stat-bar-wrap"><div class="eud-stat-bar-fill" style="width:25%;background:linear-gradient(90deg,#cc9900,#ffcc00);box-shadow:0 0 6px rgba(255,200,0,0.4)"></div></div>
+                        <span class="eud-stat-val">88</span>
+                    </div>
+                </div>
+                <div class="eud-abilities-block">
+                    <div class="eud-abilities-title">HABILIDADES REGISTRADAS</div>
+                    <button class="eud-ability-btn" onclick="abrirModal('nahomy','campo')" style="border-color:rgba(255,200,0,0.15)">
+                        <div class="eud-ability-icon" style="background:rgba(255,200,0,0.08);border:1px solid rgba(255,200,0,0.2)">✨</div>
+                        <div class="eud-ability-text">
+                            <div class="eud-ability-name">BOMBAS LIMON</div>
+                            <div class="eud-ability-type" style="color:#ffcc00;opacity:0.5">ATAQUE • DAÑO</div>
+                        </div>
+                        <span class="eud-ability-arrow" style="color:rgba(255,200,0,0.3)">›</span>
+                    </button>
+                    <button class="eud-ability-btn" onclick="abrirModal('nahomy','vision')" style="border-color:rgba(255,200,0,0.15)">
+                        <div class="eud-ability-icon" style="background:rgba(255,200,0,0.08);border:1px solid rgba(255,200,0,0.2)">👁</div>
+                        <div class="eud-ability-text">
+                            <div class="eud-ability-name">BOMBA OSO</div>
+                            <div class="eud-ability-type" style="color:#ffcc00;opacity:0.5">ATAQUE · DAÑO</div>
+                        </div>
+                        <span class="eud-ability-arrow" style="color:rgba(255,200,0,0.3)">›</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- FICHA C-J -->
+        <div class="eud-content" id="ficha-3">
+            <div class="eud-hero-card">
+                <div class="eud-card-top">
+                    <div class="eud-portrait-wrap" style="background: rgba(140,0,255,0.05); border-color: rgba(140,0,255,0.2)">
+                        <img src="cj.png" alt="C-J">
+                        <div class="eud-portrait-overlay"></div>
+                    </div>
+                    <div class="eud-card-info">
+                        <div class="eud-id-badge">EUD-004 · OPERATIVO CAZA</div>
+                        <div class="eud-card-name">C-J</div>
+                        <div class="eud-card-role" style="background:rgba(140,0,255,0.1);color:#aa44ff;border:1px solid rgba(140,0,255,0.25)">GEMELOS</div>
+                        <div class="eud-card-bio">Es mejor tener a tus enemigos mas cerca y a este par los tendremos de mejilla a mejilla.</div>
+                    </div>
+                </div>
+                <div class="eud-stats-block">
+                    <div class="eud-stats-title">ESTADÍSTICAS DE NAVE</div>
+                    <div class="eud-stat-row">
+                        <span class="eud-stat-name">FUERZA</span>
+                        <div class="eud-stat-bar-wrap"><div class="eud-stat-bar-fill" style="width:92%;background:linear-gradient(90deg,#7700cc,#aa44ff);box-shadow:0 0 6px rgba(140,0,255,0.4)"></div></div>
+                        <span class="eud-stat-val">72</span>
+                    </div>
+                    <div class="eud-stat-row">
+                        <span class="eud-stat-name">VELOCIDAD</span>
+                        <div class="eud-stat-bar-wrap"><div class="eud-stat-bar-fill" style="width:75%;background:linear-gradient(90deg,#7700cc,#aa44ff);box-shadow:0 0 6px rgba(140,0,255,0.4)"></div></div>
+                        <span class="eud-stat-val">75</span>
+                    </div>
+                    <div class="eud-stat-row">
+                        <span class="eud-stat-name">DEFENSA</span>
+                        <div class="eud-stat-bar-wrap"><div class="eud-stat-bar-fill" style="width:75%;background:linear-gradient(90deg,#7700cc,#aa44ff);box-shadow:0 0 6px rgba(140,0,255,0.4)"></div></div>
+                        <span class="eud-stat-val">85</span>
+                    </div>
+                    <div class="eud-stat-row">
+                        <span class="eud-stat-name">TRIPULACION</span>
+                        <div class="eud-stat-bar-wrap"><div class="eud-stat-bar-fill" style="width:52%;background:linear-gradient(90deg,#7700cc,#aa44ff);box-shadow:0 0 6px rgba(140,0,255,0.4)"></div></div>
+                        <span class="eud-stat-val">92</span>
+                    </div>
+                </div>
+                <div class="eud-abilities-block">
+                    <div class="eud-abilities-title">HABILIDADES REGISTRADAS</div>
+                    <button class="eud-ability-btn" onclick="abrirModal('cj','emp')" style="border-color:rgba(140,0,255,0.15)">
+                        <div class="eud-ability-icon" style="background:rgba(140,0,255,0.08);border:1px solid rgba(140,0,255,0.2)">💥</div>
+                        <div class="eud-ability-text">
+                            <div class="eud-ability-name">PULSO EMP</div>
+                            <div class="eud-ability-type" style="color:#aa44ff;opacity:0.5">ATAQUE · TECNOLÓGICO</div>
+                        </div>
+                        <span class="eud-ability-arrow" style="color:rgba(140,0,255,0.3)">›</span>
+                    </button>
+                    <button class="eud-ability-btn" onclick="abrirModal('cj','tele')" style="border-color:rgba(140,0,255,0.15)">
+                        <div class="eud-ability-icon" style="background:rgba(140,0,255,0.08);border:1px solid rgba(140,0,255,0.2)">🔮</div>
+                        <div class="eud-ability-text">
+                            <div class="eud-ability-name">LADRIDO DOBLE</div>
+                            <div class="eud-ability-type" style="color:#aa44ff;opacity:0.5">ATAQUE · DAÑO</div>
+                        </div>
+                        <span class="eud-ability-arrow" style="color:rgba(140,0,255,0.3)">›</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="eud-footer">
+            <button class="btn-volver" onclick="irA('inicio')" style="width:100%;text-align:center">◀ VOLVER AL MENÚ</button>
+        </div>
+
+        <!-- Modal de habilidad -->
+        <div id="ability-modal">
+            <div class="modal-backdrop" onclick="cerrarModal()"></div>
+            <div class="modal-sheet">
+                <div class="modal-hero-accent" id="modal-accent"></div>
+                <div class="modal-handle"></div>
+                <div class="modal-header">
+                    <div class="modal-ability-tag" id="modal-tag"></div>
+                    <div class="modal-ability-title" id="modal-title"></div>
+                    <div class="modal-icon-row">
+                        <span class="modal-big-icon" id="modal-icon"></span>
+                        <span class="modal-subtitle" id="modal-subtitle"></span>
+                    </div>
+                </div>
+                <div class="modal-body">
+                    <div class="modal-ability-img-wrap" id="modal-img-wrap">
+                        <img class="modal-ability-img" id="modal-ability-img" src="" alt="">
+                        <div class="modal-img-placeholder" id="modal-img-placeholder">
+                            <span class="placeholder-icon">🖼</span>
+                            <span class="placeholder-text">IMAGEN DEL ARTEFACTO</span>
+                            <span class="placeholder-sub">Próximamente</span>
+                        </div>
+                    </div>
+                    <div class="modal-section-label">DESCRIPCIÓN</div>
+                    <div class="modal-text" id="modal-desc"></div>
+                    <div class="modal-section-label">CÓMO SE DESARROLLÓ</div>
+                    <div class="modal-text" id="modal-origin"></div>
+                    <div class="modal-origin-quote" id="modal-quote" style="display:none"></div>
+                </div>
+                <button class="modal-close-btn" onclick="cerrarModal()">✕ CERRAR ARCHIVO</button>
+            </div>
+        </div>
+    </div>
+    <!-- ══════════ CONFIGURACIÓN ══════════ -->
+    <div id="configuracion" class="pantalla">
+        <div class="config-header">
+            <h2>AJUSTES DEL SISTEMA</h2>
+        </div>
+
+        <div class="config-section">
+            <div class="config-section-title">AUDIO</div>
+            <div class="config-item">
+                <div>
+                    <div class="config-item-label">Música</div>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="musica" checked onchange="guardarAjustes()">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+            <div class="config-item">
+                <div>
+                    <div class="config-item-label">Efectos de sonido</div>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="efectos" checked onchange="guardarAjustes()">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+            <div class="config-item">
+                <div>
+                    <div class="config-item-label">Volumen</div>
+                    <div class="config-label-dinamico" id="vol-display">80%</div>
+                </div>
+                <input type="range" id="volumen" min="0" max="100" value="80" oninput="document.getElementById('vol-display').textContent=this.value+'%'; guardarAjustes()">
+            </div>
+        </div>
+
+        <div class="config-section">
+            <div class="config-section-title">CONTROLES</div>
+            <div class="config-item">
+                <div>
+                    <div class="config-item-label">Tamaño HUD</div>
+                    <div class="config-label-dinamico" id="val-tam">100%</div>
+                </div>
+                <input type="range" id="slider-tam" min="60" max="140" value="100" oninput="guardarAjustesControles()">
+            </div>
+            <div class="config-item">
+                <div>
+                    <div class="config-item-label">Margen de borde</div>
+                    <div class="config-label-dinamico" id="val-pos">15px</div>
+                </div>
+                <input type="range" id="slider-pos" min="5" max="40" value="15" oninput="guardarAjustesControles()">
+            </div>
+        </div>
+
+        <button class="btn-hud" onclick="irA('edicion-hud')">⊞ EDITAR POSICIÓN HUD</button>
+        <button class="btn-volver" onclick="irA('inicio')">◀ VOLVER</button>
+    </div>
+
+    <!-- ══════════ EDICIÓN HUD ══════════ -->
+    <div id="edicion-hud" class="pantalla">
+        <h2>MUEVE TU HUD</h2>
+        <p>Arrastra el Joystick, Botones de acción y Pausa a la posición que desees dentro de la pantalla.</p>
+
+        <div class="zona-simulacion" id="contenedor-espejo">
+            <div class="guia-texto">ÁREA DE JUEGO</div>
+            <div id="drag-joystick" class="drag-control"><div class="pivote-interno"></div></div>
+            <div id="drag-botones" class="drag-control">
+                <div class="circulo-sub">ESP</div>
+                <div class="circulo-sub">FIR</div>
+            </div>
+            <div id="drag-pausa" class="drag-control"><span>PAUSA</span></div>
+        </div>
+
+        <div class="hud-footer">
+            <button class="btn-restaurar" onclick="restablecerHudDefecto()">↺ RESTAURAR ORIGINAL</button>
+            <button class="btn-guardar-hud" onclick="irA('configuracion')">GUARDAR Y VOLVER ▶</button>
+        </div>
+    </div>
+
+</div><!-- /pantalla-juego -->
+
+<!-- ══════════ METAL SLUG OVERLAY ══════════ -->
+<div id="metal-slug-overlay">
+    <div class="ms-bg" id="ms-bg"></div>
+    <div class="ms-flash" id="ms-flash"></div>
+    <div class="ms-scanlines" id="ms-scanlines"></div>
+    <div class="ms-frame" id="ms-frame">
+        <span class="ms-label-player">— HÉROE SELECCIONADO —</span>
+        <div class="ms-top-bar"></div>
+        <div class="ms-hero-portrait">
+            <div class="ms-particles" id="ms-particles"></div>
+            <img id="ms-hero-img" src="" alt="">
+            <div class="ms-corner tl"></div>
+            <div class="ms-corner tr"></div>
+            <div class="ms-corner bl"></div>
+            <div class="ms-corner br"></div>
+        </div>
+        <div class="ms-bottom-bar"></div>
+        <div class="ms-hero-name" id="ms-hero-name"></div>
+        <div class="ms-hero-class" id="ms-hero-class"></div>
+        <div class="ms-power-bars" id="ms-power-bars"></div>
+        <div class="ms-selected-text" id="ms-selected-text">✔ DESPLEGADO</div>
+    </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+// ─── AUDIO ENGINE ───
+// ═══════════════════════════════════════════════
+let audioCtx = null;
+let soundtrackRunning = false;
+let menuAudio = null;
+
+function getAudioCtx() {
+    if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    return audioCtx;
+}
+
+// ─── SOUNDTRACK: musicmenu.mp3 ───
+function logAudio(msg, color) {
+    const el = document.getElementById('log-audio');
+    if (el) { el.style.color = color || '#00ff00'; el.innerText = '🎵 ' + msg; }
+    console.log('[AUDIO]', msg);
+}
+
+function iniciarSoundtrack() {
+    if (soundtrackRunning) return;
+    const ajustes = JSON.parse(localStorage.getItem('gameSettings')) || { musica: true, volumen: 80 };
+    if (ajustes.musica === false) {
+        logAudio('Música desactivada en ajustes', '#ffcc00');
+        return;
+    }
+    soundtrackRunning = true;
+    if (!menuAudio) {
+        menuAudio = new Audio();
+        menuAudio.src = 'musicmenu.mp3';
+        menuAudio.loop = true;
+        menuAudio.volume = (ajustes.volumen !== undefined ? ajustes.volumen : 80) / 100;
+        menuAudio.onerror = (e) => {
+            logAudio('ERROR: No se pudo cargar musicmenu.mp3 — ¿está en la misma carpeta?', '#ff4444');
+            soundtrackRunning = false;
+        };
+        menuAudio.oncanplaythrough = () => logAudio('Archivo cargado OK, reproduciendo...', '#00ff00');
+    }
+    const playPromise = menuAudio.play();
+    if (playPromise !== undefined) {
+        playPromise
+            .then(() => logAudio('Reproduciendo musicmenu.mp3 ✔', '#00ff00'))
+            .catch(err => {
+                logAudio('Bloqueado: ' + err.message, '#ff4444');
+                soundtrackRunning = false;
+            });
+    }
+}
+
+function detenerSoundtrack() {
+    soundtrackRunning = false;
+    if (menuAudio) {
+        menuAudio.pause();
+        menuAudio.currentTime = 0;
+    }
+}
+
+// ─── SONIDOS POR HÉROE (Metal Slug style) ───
+function playHeroSound(hero) {
+    const ctx = getAudioCtx();
+    const now = ctx.currentTime;
+
+    const sounds = {
+        'Brandon': () => {
+            // Golpe de poder + acorde épico
+            [0, 0.06, 0.12].forEach((t, i) => {
+                const o = ctx.createOscillator();
+                const g = ctx.createGain();
+                o.type = 'sawtooth';
+                o.frequency.value = [80, 100, 60][i];
+                g.gain.setValueAtTime(0.5, now + t);
+                g.gain.exponentialRampToValueAtTime(0.001, now + t + 0.3);
+                o.connect(g); g.connect(ctx.destination);
+                o.start(now + t); o.stop(now + t + 0.35);
+            });
+            setTimeout(() => {
+                [330, 415, 494, 660].forEach((f, i) => {
+                    const o = ctx.createOscillator();
+                    const g = ctx.createGain();
+                    o.type = 'triangle';
+                    o.frequency.value = f;
+                    g.gain.setValueAtTime(0, now + 0.2 + i*0.04);
+                    g.gain.linearRampToValueAtTime(0.15, now + 0.22 + i*0.04);
+                    g.gain.exponentialRampToValueAtTime(0.001, now + 0.8 + i*0.04);
+                    o.connect(g); g.connect(ctx.destination);
+                    o.start(now + 0.2 + i*0.04); o.stop(now + 0.9);
+                });
+            }, 10);
+        },
+        'Kleydi': () => {
+            // Ráfaga de energía rosa + tono mágico
+            for (let i = 0; i < 8; i++) {
+                const o = ctx.createOscillator();
+                const g = ctx.createGain();
+                o.type = 'sine';
+                o.frequency.setValueAtTime(600 + i*80, now + i*0.05);
+                o.frequency.linearRampToValueAtTime(1800 + i*60, now + i*0.05 + 0.2);
+                g.gain.setValueAtTime(0.12, now + i*0.05);
+                g.gain.exponentialRampToValueAtTime(0.001, now + i*0.05 + 0.25);
+                o.connect(g); g.connect(ctx.destination);
+                o.start(now + i*0.05); o.stop(now + i*0.05 + 0.3);
+            }
+            const o2 = ctx.createOscillator();
+            const g2 = ctx.createGain();
+            o2.type = 'sine';
+            o2.frequency.value = 880;
+            g2.gain.setValueAtTime(0, now + 0.3);
+            g2.gain.linearRampToValueAtTime(0.2, now + 0.45);
+            g2.gain.exponentialRampToValueAtTime(0.001, now + 1.1);
+            o2.connect(g2); g2.connect(ctx.destination);
+            o2.start(now + 0.3); o2.stop(now + 1.2);
+        },
+        'Nahomy': () => {
+            // Tono dorado táctil, crescendo estratégico
+            const melody = [440, 554, 659, 880, 659, 880, 1108];
+            melody.forEach((f, i) => {
+                const o = ctx.createOscillator();
+                const g = ctx.createGain();
+                o.type = i < 4 ? 'triangle' : 'sine';
+                o.frequency.value = f;
+                g.gain.setValueAtTime(0, now + i*0.09);
+                g.gain.linearRampToValueAtTime(0.14 - i*0.01, now + i*0.09 + 0.05);
+                g.gain.exponentialRampToValueAtTime(0.001, now + i*0.09 + 0.28);
+                o.connect(g); g.connect(ctx.destination);
+                o.start(now + i*0.09); o.stop(now + i*0.09 + 0.32);
+            });
+        },
+        'C-J': () => {
+          // Pulso tech + distorsión digital
+            for (let i = 0; i < 5; i++) {
+                const bufSize = ctx.sampleRate * 0.08;
+                const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+                const d = buf.getChannelData(0);
+                for (let j = 0; j < bufSize; j++) d[j] = Math.random() * 2 - 1;
+                const src = ctx.createBufferSource();
+                src.buffer = buf;
+                const hp = ctx.createBiquadFilter();
+                hp.type = 'bandpass';
+                hp.frequency.value = 1000 + i*600;
+                hp.Q.value = 5;
+                const g = ctx.createGain();
+                g.gain.setValueAtTime(0.18, now + i*0.07);
+                g.gain.exponentialRampToValueAtTime(0.001, now + i*0.07 + 0.12);
+                src.connect(hp); hp.connect(g); g.connect(ctx.destination);
+                src.start(now + i*0.07); src.stop(now + i*0.07 + 0.15);
+            }
+            [220, 277, 330, 440, 554, 659].forEach((f, i) => {
+                const o = ctx.createOscillator();
+                const g = ctx.createGain();
+                o.type = 'square';
+                o.frequency.value = f;
+                g.gain.setValueAtTime(0, now + 0.3 + i*0.05);
+                g.gain.linearRampToValueAtTime(0.08, now + 0.32 + i*0.05);
+                g.gain.exponentialRampToValueAtTime(0.001, now + 0.5 + i*0.05);
+                o.connect(g); g.connect(ctx.destination);
+                o.start(now + 0.3 + i*0.05); o.stop(now + 0.6 + i*0.05);
+            });
+        }
+    };
+
+    if (sounds[hero]) sounds[hero]();
+}
+
+// ═══════════════════════════════════════════════
+// ─── METAL SLUG HERO REVEAL ───
+// ═══════════════════════════════════════════════
+const HERO_MS_DATA = {
+    'Brandon': { color: '#00ffcc', img: 'brandon.png', clase: 'JOKER', colorVar: 'rgba(0,255,204,0.5)' },
+    'Kleydi':  { color: '#ff4499', img: 'kleydi.png',  clase: 'ALPHA', colorVar: 'rgba(255,0,150,0.5)' },
+    'Nahomy':  { color: '#ffcc00', img: 'nahomy.png',  clase: 'ESTRELLA', colorVar: 'rgba(255,200,0,0.5)' },
+    'C-J':     { color: '#aa44ff', img: 'cj.png',      clase: 'SOL Y LUNA',    colorVar: 'rgba(140,0,255,0.5)' },
+};
+
+function mostrarRevealHero(hero, callback) {
+    const data = HERO_MS_DATA[hero];
+    if (!data) { if (callback) callback(); return; }
+
+    const overlay = document.getElementById('metal-slug-overlay');
+    const bg = document.getElementById('ms-bg');
+    const flash = document.getElementById('ms-flash');
+    const scanlines = document.getElementById('ms-scanlines');
+    const frame = document.getElementById('ms-frame');
+    const img = document.getElementById('ms-hero-img');
+    const nameEl = document.getElementById('ms-hero-name');
+    const classEl = document.getElementById('ms-hero-class');
+    const selectedEl = document.getElementById('ms-selected-text');
+    const powersEl = document.getElementById('ms-power-bars');
+    const particles = document.getElementById('ms-particles');
+
+    // Set colors
+    overlay.style.setProperty('--ms-color', data.color);
+    frame.style.setProperty('--ms-color', data.color);
+    document.querySelectorAll('.ms-corner').forEach(c => c.style.borderColor = data.color);
+    document.querySelectorAll('.ms-top-bar,.ms-bottom-bar').forEach(b => b.style.background = `linear-gradient(90deg, transparent, ${data.color}, transparent)`);
+    document.querySelectorAll('.ms-label-player,.ms-hero-class,.ms-selected-text').forEach(el => el.style.color = data.color);
+    nameEl.style.textShadow = `0 0 20px ${data.color}, 0 0 40px ${data.color}`;
+
+    img.src = data.img;
+    nameEl.textContent = hero.toUpperCase();
+    classEl.textContent = data.clase;
+    selectedEl.textContent = '✔ CONFIRMED';
+
+    // Power bars
+    powersEl.innerHTML = '';
+    for (let i = 0; i < 7; i++) {
+        const bar = document.createElement('div');
+        bar.className = 'ms-power-bar';
+        bar.style.background = data.color;
+        bar.style.boxShadow = `0 0 6px ${data.color}`;
+        powersEl.appendChild(bar);
+    }
+
+    // Particles
+    particles.innerHTML = '';
+    for (let i = 0; i < 20; i++) {
+        const p = document.createElement('div');
+        p.className = 'ms-particle';
+        p.style.cssText = `
+            left: ${Math.random()*100}%;
+            top: ${Math.random()*100}%;
+            background: ${data.color};
+            box-shadow: 0 0 4px ${data.color};
+            animation: particle-${i} ${0.6 + Math.random()*0.8}s ease-out ${Math.random()*0.4}s forwards;
+        `;
+        particles.appendChild(p);
+    }
+
+    // Inject particle keyframes
+    let styleTag = document.getElementById('ms-particle-styles');
+    if (!styleTag) { styleTag = document.createElement('style'); styleTag.id = 'ms-particle-styles'; document.head.appendChild(styleTag); }
+    let kf = '';
+    for (let i = 0; i < 20; i++) {
+        const dx = (Math.random()-0.5)*120;
+        const dy = (Math.random()-0.5)*120;
+        kf += `@keyframes particle-${i} {
+            0%   { opacity:1; transform: translate(0,0) scale(1); }
+            100% { opacity:0; transform: translate(${dx}px,${dy}px) scale(0); }
+        }`;
+    }
+    styleTag.textContent = kf;
+
+    // Reset state
+    overlay.style.opacity = '0';
+    overlay.classList.add('active');
+    bg.style.opacity = '0';
+    flash.style.opacity = '0';
+    flash.style.animation = 'none';
+    scanlines.style.opacity = '0';
+    frame.style.opacity = '0';
+    frame.style.transform = 'scale(0.8)';
+    nameEl.style.opacity = '0';
+    nameEl.style.transform = 'translateY(10px)';
+    classEl.style.opacity = '0';
+    classEl.style.transform = 'translateY(6px)';
+    selectedEl.style.opacity = '0';
+    selectedEl.style.animation = 'none';
+    powersEl.style.opacity = '0';
+
+    // Sequence
+    // T=0: overlay visible + flash
+    overlay.style.transition = 'opacity 0.05s';
+    overlay.style.opacity = '1';
+
+    setTimeout(() => {
+        bg.style.transition = 'opacity 0.1s';
+        bg.style.opacity = '1';
+        flash.style.opacity = '0.85';
+        flash.style.transition = 'opacity 0.3s';
+        flash.style.opacity = '0';
+        scanlines.style.opacity = '1';
+    }, 50);
+
+    // T=120ms: frame appears
+    setTimeout(() => {
+        frame.style.transition = 'transform 0.35s cubic-bezier(0.175,0.885,0.32,1.275), opacity 0.2s';
+        frame.style.opacity = '1';
+        frame.style.transform = 'scale(1)';
+    }, 120);
+
+    // T=300ms: hero name
+    setTimeout(() => {
+        nameEl.style.transition = 'opacity 0.25s, transform 0.25s';
+        nameEl.style.opacity = '1';
+        nameEl.style.transform = 'translateY(0)';
+        classEl.style.transition = 'opacity 0.25s 0.1s, transform 0.25s 0.1s';
+        classEl.style.opacity = '1';
+        classEl.style.transform = 'translateY(0)';
+        powersEl.style.transition = 'opacity 0.3s 0.15s';
+        powersEl.style.opacity = '1';
+    }, 350);
+
+    // T=700ms: SELECTED blink
+    setTimeout(() => {
+        selectedEl.style.animation = 'msSelectedBlink 0.5s ease-in-out 3 forwards';
+        selectedEl.style.opacity = '1';
+    }, 700);
+
+    // T=1800ms: fade out + callback
+    setTimeout(() => {
+        overlay.style.transition = 'opacity 0.4s';
+        overlay.style.opacity = '0';
+        setTimeout(() => {
+            overlay.classList.remove('active');
+            overlay.style.opacity = '0';
+            if (callback) callback();
+        }, 420);
+    }, 1900);
+}
+// ═══════════════════════════════════════════════
+// ─── DATOS HABILIDADES ───
+// ═══════════════════════════════════════════════
+const ABILITY_DATA = {
+    'brandon-pulso': {
+        tag: 'EUD · HABILIDAD ESPECIAL',
+        title: 'BLASTERCOOL',
+        icon: '⚡',
+        subtitle: 'ATAQUE · ÁREA',
+        color: '#00ffcc',
+        gradColor: 'linear-gradient(90deg, #00cc99, #00ffcc)',
+        img: 'blastercool.png',
+        desc: 'Brandon usa un Blaster cargado de 4 bombas potentes capaz de destruir naves completas es una tecnologia que no habiamos visto antes.',
+        origin: 'Durante su primer enfrentamiento interdimensional antes de pertenecer a alguna faccion, Brandon fue arrojado contra una agujero negro. Al impactar con varias naves que es ese momento eran enemigas, tomo la drastics desicion de usar su dispositivo BETABLASTER diseñado por el mismo. El resultado fue devastador: mas de 12 Naves quedaron destruidas por el entre ellas una nave llamads "Genesis" los cientificos de la E.U.D  tardaron 1 año completo en intentar recrear el blaster con todos los intentos fallidos hasta ahora',
+        quote: '"No pueden manejarse ustedes mismos no piensen que pueden manejarme a mi, la EUD solo piensa en si misma" — Brandon, informe post-misión #003'
+    },
+    'brandon-escudo': {
+        tag: 'EUD-001 · HABILIDAD B',
+        title: 'GARRA FELINA',
+        icon: '🛡',
+        subtitle: 'DEFENSA · PERSONAL',
+        color: '#00ffcc',
+        gradColor: 'linear-gradient(90deg, #00cc99, #00ffcc)',
+        img: 'garrafelina.png',
+        desc: 'Bleed genera un sonido de energía dimensional sólida alrededor de su nave. al dispararlo suele ser como un garraso potente.',
+        origin: 'Desarrollado desde pequeño, donde Brandon quedó atrapado junto a Bleed bajo toneladas escombros. Para sobrevivir, Bleed instintivamente comprimió la energía de su cuerpo hacia afuera, creando una fuerza que contuvo la presión. La E.U.D. catalogó este mecanismo como "GARRA FELINA" era una tecnics fuers dencontrol pero la E.U.D lo entrenó hasta convertirlo en una técnica controlable.',
+        quote: '"Estoy exhausto el capitan Bleed esta acargo mientras yo duermo, total el es mas capaz que ustedes." — Brandon'
+    },
+    'kleydi-nova': {
+        tag: 'EUD-002 · HABILIDAD ESPECIAL',
+        title: 'CUTE BOMB',
+        icon: '🌸',
+        subtitle: 'ATAQUE · EXPLOSIVO',
+        color: '#ff4499',
+        gradColor: 'linear-gradient(90deg, #cc0066, #ff4499)',
+        img: 'cutebomb.png',
+        desc: 'Kleydi concentra energía dimensional en su nave durante 1.5 segundos y la proyecta como una esfera de plasma de alta densidad. Al impactar, genera una explosión expansiva de energía rosa que desintegra parcialmente la materia inorgánica.',
+        origin: 'La primera vez que Kleydi manifestó esta habilidad tenía 10 años. Durante un evento dimensional espontáneo, absorbió sin querer una descarga masiva de energía. Para evitar una explosión interna, la expulsó toda a la vez. El resultado fue visible desde 3 kilómetros. Los analistas de la E.U.D. que llegaron al lugar tardaron dos días en creer lo que veían sus instrumentos.',
+        quote: '"Me asusté. Pensé que había destruido todo. Luego vi que solo había un cráter y me sentí... aliviada." — Kleydi, evaluación psicológica inicial'
+    },
+    'kleydi-vortex': {
+        tag: 'EUD-002 · ATAQUE',
+        title: 'MISIL LADRIDO',
+        icon: '🌀',
+        subtitle: 'CONTROL · CAMPO',
+        color: '#ff4499',
+        gradColor: 'linear-gradient(90deg, #cc0066, #ff4499)',
+        img: 'misilladrido.png',
+        desc: 'este increible perro crea un punto de fuerza muy poderosa desde su osico, al utilizar un alto megafono implementado en su lugsr de copiloto al ladrar genera una omds expansiva capaz de dañar objetos.',
+        origin: 'Nació de un accidente durante el entrenamiento avanzado. colapsando en el proceso uns vez despierto confundio un entrenamiento de la capitana alpha creyendo que estaba en peligro lanza un guerte ladrido que deja inconciente al profesoe de lucha reventando sus tempanos en el proceso.',
+        quote: null
+    },
+    'nahomy-campo': {
+        tag: 'EUD-003 · HABILIDAD ESPECIAL',
+        title: 'BOMBAS LIMON',
+        icon: '✨',
+        subtitle: 'DAÑO · ÁREA',
+        color: '#ffcc00',
+        gradColor: 'linear-gradient(90deg, #cc9900, #ffcc00)',
+        img: 'bombaslimon.png',
+        desc: 'Bombas que liveran una explosion agria capaz de oxidar las navez',
+        origin: 'Nahomy creo esta habilidad no en combate, sino mientras jugaba y comia se dioo cuenta que un aexplosion agria podria podrir de alguna forma el metal desarrollo su dispositivo apartie de materiales caseros lo perfecciono ahora que esta en la E.U.D se encuentra en constante mejora de su dispositivo junto al capitan de la nave apocalipto',
+        quote: '"ñaaaam limon y hielo, ¿que me ven? prueben es muy delicioso." — Nahomy, conferencia E.U.D. año 5'
+    },
+    'nahomy-vision': {
+        tag: 'EUD-003 · HABILIDAD ATAQUE',
+        title: 'BOMBA OSO',
+        icon: '👁',
+        subtitle: 'PASIVO · DAÑO',
+        color: '#ffcc00',
+        gradColor: 'linear-gradient(90deg, #cc9900, #ffcc00)',
+        img: 'bombaoso.png',
+        desc: '¿Un oso de peluche que libera bombas? esto es una locura ¿no? bueno esto es real un oso capaz de liberar bombas a su antojo .',
+        origin: 'No fue algo que Nahomy desarrollara voluntariamente. solo sabe que su oso crecio a su lado se dice que este oso de peluche tiene vida gracias a una galaxia que vive dentro de el quiza eso explique por que puede lanzar bombas a gusto y placer propio que mas podemos decir es un oso y una niña son faciles de contener',
+        quote: '"No doy abrazos de oso doy bombas de oso para que exploten." — Nahomy'
+    },
+    'cj-emp': {
+        tag: 'EUD-004 · HABILIDAD ESPECIAL',
+        title: 'PULSO EMP',
+        icon: '💥',
+        subtitle: 'ATAQUE · TECNOLÓGICO',
+        color: '#aa44ff',
+        gradColor: 'linear-gradient(90deg, #7700cc, #aa44ff)',
+        img: 'pulsoemp.png',
+        desc: 'C-J activa su dispositivo de pulso electromagnético dimensional, emitiendo una descarga que neutraliza cualquier sistema tecnológico o mecánico en un radio de 15 metros. Las entidades cyborg y enemigos con implantes tecnológicos quedan incapacitados durante segundos. El dispositivo requiere unos segundos de recarga.',
+        origin: 'Creado por ambos a los 14 años en su taller personal, usando piezas de equipos de la E.U.D. que supuestamente estaban "en desuso"(robaron). Originalmente era un dispositivo de seguridad para proteger su laboratorio. La primera vez que lo probaron a escala real, apagó accidentalmente todos los sistemas del cuartel general durante 60 minutos. Fue arrestado y contratado el mismo día.',
+        quote: '"Técnicamente no destruimos nada. Solo... les damos un descanso forzado. Todos necesitan un descanso." — C-J, informe de incidente #1'
+    },
+    'cj-tele': {
+        tag: 'EUD-004 · HABILIDAD ATAQUE',
+        title: 'LADRIDO DOBLE',
+        icon: '🔮',
+        subtitle: 'DAÑO · ATAQUE',
+        color: '#aa44ff',
+        gradColor: 'linear-gradient(90deg, #7700cc, #aa44ff)',
+        img: 'ladridodoble.png',
+        desc: 'Un ladrido capaz de escucharse dos veces al mismo tiempo recarga el sonar de alta voz y puede comprimir una nave por su fuerza.',
+        origin: 'Una pequeña cachorra al verse amenazada por proyectiles de las naves de la E.U.D decidio correr por su vida encontrando al par de hermanos escabuyendose de forma sigilosa en las instalaciones de la E.U.D estos dejaron unas piezas de metal que llevaban en sus manos y decidieron combatir para defenderla la cachorra al ver que ellos estaban siendo superados decidio de pura frustracion y enojo lanzar un fuerte ladrido haciendo que rebotara de forma sonora por el pasillo la fuerza hizo que se escuchara doble de derecha a izquierda esta misma fuerza de ambos lados comprimio a los soldados asi los hermanos y la pequeña cachorra huyeron sanos y salvos.',
+        quote: '"No hables con nosotros habla con ella, quiza soportes la presion" — C-J'
+    },
+};
+
+function abrirModal(heroe, habilidad) {
+    const key = `${heroe}-${habilidad}`;
+    const data = ABILITY_DATA[key];
+    if (!data) return;
+
+    document.getElementById('modal-tag').textContent = data.tag;
+    document.getElementById('modal-tag').style.color = data.color;
+    document.getElementById('modal-title').textContent = data.title;
+    document.getElementById('modal-title').style.color = '#fff';
+    document.getElementById('modal-icon').textContent = data.icon;
+    document.getElementById('modal-subtitle').textContent = data.subtitle;
+    document.getElementById('modal-subtitle').style.color = data.color;
+    document.getElementById('modal-accent').style.background = data.gradColor;
+    document.getElementById('modal-desc').textContent = data.desc;
+    document.getElementById('modal-origin').textContent = data.origin;
+
+    const quote = document.getElementById('modal-quote');
+    if (data.quote) {
+        quote.style.display = 'block';
+        quote.textContent = data.quote;
+        quote.style.borderLeftColor = data.color;
+    } else {
+        quote.style.display = 'none';
+    }
+
+    // Imagen de habilidad
+    const imgWrap = document.getElementById('modal-img-wrap');
+    const imgEl = document.getElementById('modal-ability-img');
+    const placeholder = document.getElementById('modal-img-placeholder');
+    const imgName = data.img || (data.title.toLowerCase().replace(/\s+/g, '_') + '.png');
+    imgEl.alt = data.title;
+    imgWrap.classList.remove('hidden');
+    imgEl.style.display = 'none';
+    if (placeholder) placeholder.style.display = 'flex';
+    imgEl.onerror = function() {
+        imgEl.style.display = 'none';
+        if (placeholder) placeholder.style.display = 'flex';
+    };
+    imgEl.onload = function() {
+        imgEl.style.display = 'block';
+        if (placeholder) placeholder.style.display = 'none';
+    };
+    imgEl.src = imgName;
+
+    document.getElementById('ability-modal').classList.add('open');
+}
+
+function cerrarModal() {
+    document.getElementById('ability-modal').classList.remove('open');
+}
+
+// ═══════════════════════════════════════════════
+// ─── CARRUSEL ───
+// ═══════════════════════════════════════════════
+const HEROES = ['Brandon','Kleydi','Nahomy','C-J'];
+let heroeSeleccionado = 'Brandon';
+let slideActual = 0;
+let escalaActual = 1.0;
+
+function irASlide(index) {
+    slideActual = index;
+    document.getElementById('hero-slides').style.transform = `translateX(-${index * 100}%)`;
+    document.getElementById('hero-counter').textContent = `${index + 1} / ${HEROES.length}`;
+    document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i === index));
+    const slide = document.querySelectorAll('.hero-slide')[index];
+    heroeSeleccionado = slide.dataset.hero;
+}
+
+function cambiarHeroe(dir) {
+    let next = slideActual + dir;
+    if (next < 0) next = HEROES.length - 1;
+    if (next >= HEROES.length) next = 0;
+    irASlide(next);
+}
+
+// Touch swipe
+let touchStartX = 0;
+document.getElementById('hero-slides').addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, {passive:true});
+document.getElementById('hero-slides').addEventListener('touchend', e => {
+    const diff = touchStartX - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 40) cambiarHeroe(diff > 0 ? 1 : -1);
+});
+
+function confirmarHeroe() {
+    // Start AudioContext on user interaction
+    getAudioCtx();
+    // Play hero-specific sound
+    playHeroSound(heroeSeleccionado);
+    // Show Metal Slug reveal then go to menu
+    mostrarRevealHero(heroeSeleccionado, () => {
+        const imgMap = { 'Brandon':'brandon.png', 'Kleydi':'kleydi.png', 'Nahomy':'nahomy.png', 'C-J':'cj.png' };
+        document.getElementById('preview-hero-main').src = imgMap[heroeSeleccionado] || 'brandon.png';
+        localStorage.setItem('heroeSeleccionado', heroeSeleccionado);
+        irA('inicio');
+    });
+}
+// ─── NAVEGACIÓN ───
+function irA(id) {
+    document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
+    document.getElementById(id).classList.add('activa');
+}
+
+function iniciarPartida() {
+    window.location.assign('./niveles.html');
+}
+
+// ─── FICHAS E.U.D. ───
+function cambiarFicha(idx) {
+    document.querySelectorAll('.eud-tab').forEach((t,i) => t.classList.toggle('active', i === idx));
+    document.querySelectorAll('.eud-content').forEach((c,i) => c.classList.toggle('active', i === idx));
+}
+
+// ─── AJUSTES ───
+function guardarAjustes() {
+    const ajustes = {
+        musica: document.getElementById('musica').checked,
+        efectos: document.getElementById('efectos').checked,
+        volumen: document.getElementById('volumen').value
+    };
+    localStorage.setItem('gameSettings', JSON.stringify(ajustes));
+    // Aplicar cambios de audio en tiempo real
+    if (menuAudio) {
+        menuAudio.volume = ajustes.volumen / 100;
+        if (ajustes.musica && menuAudio.paused) {
+            soundtrackRunning = false;
+            iniciarSoundtrack();
+        } else if (!ajustes.musica && !menuAudio.paused) {
+            detenerSoundtrack();
+        }
+    }
+}
+
+function guardarAjustesControles() {
+    let tam = document.getElementById('slider-tam').value;
+    let pos = document.getElementById('slider-pos').value;
+    document.getElementById('val-tam').innerText = tam + '%';
+    document.getElementById('val-pos').innerText = pos + 'px';
+    escalaActual = tam / 100;
+    localStorage.setItem('controlEscala', escalaActual);
+    localStorage.setItem('controlMargen', pos);
+    actualizarEscalaSimulador();
+}
+
+function actualizarEscalaSimulador() {
+    document.querySelectorAll('.drag-control').forEach(c => {
+        c.style.transform = `scale(${escalaActual})`;
+    });
+}
+
+// ─── ARRASTRE HUD ───
+function configurarArrastreHud() {
+    const contenedor = document.getElementById('contenedor-espejo');
+    const joystick = document.getElementById('drag-joystick');
+    const botones = document.getElementById('drag-botones');
+    const pausa = document.getElementById('drag-pausa');
+
+    let posJoystick = JSON.parse(localStorage.getItem('hudPosJoystick')) || { x: 20, y: 220 };
+    let posBotones = JSON.parse(localStorage.getItem('hudPosBotones')) || { x: 215, y: 230 };
+    let posPausa = JSON.parse(localStorage.getItem('hudPosPausa')) || { x: 245, y: 30 };
+
+    joystick.style.left = posJoystick.x + 'px'; joystick.style.top = posJoystick.y + 'px';
+    botones.style.left = posBotones.x + 'px'; botones.style.top = posBotones.y + 'px';
+    pausa.style.left = posPausa.x + 'px'; pausa.style.top = posPausa.y + 'px';
+
+    hacerArrastrable(joystick, contenedor, 'hudPosJoystick');
+    hacerArrastrable(botones, contenedor, 'hudPosBotones');
+    hacerArrastrable(pausa, contenedor, 'hudPosPausa');
+}
+
+function hacerArrastrable(el, cont, key) {
+    let active = false, curX, curY, iniX, iniY, offX = el.offsetLeft, offY = el.offsetTop;
+    const getXY = e => e.touches ? [e.touches[0].clientX, e.touches[0].clientY] : [e.clientX, e.clientY];
+    el.addEventListener('touchstart', e => { [iniX, iniY] = [getXY(e)[0] - (offX = el.offsetLeft), getXY(e)[1] - (offY = el.offsetTop)]; active = true; });
+    el.addEventListener('mousedown', e => { [iniX, iniY] = [e.clientX - (offX = el.offsetLeft), e.clientY - (offY = el.offsetTop)]; active = true; });
+    const end = () => { active = false; localStorage.setItem(key, JSON.stringify({x: offX, y: offY})); };
+    el.addEventListener('touchend', end); el.addEventListener('mouseup', end);
+    const move = e => {
+        if (!active) return; e.preventDefault();
+        let [cx, cy] = getXY(e);
+        curX = Math.max(0, Math.min(cx - iniX, cont.clientWidth - el.clientWidth));
+        curY = Math.max(0, Math.min(cy - iniY, cont.clientHeight - el.clientHeight));
+        offX = curX; offY = curY;
+        el.style.left = curX + 'px'; el.style.top = curY + 'px';
+    };
+    el.addEventListener('touchmove', move, {passive: false}); el.addEventListener('mousemove', move);
+}
+
+function restablecerHudDefecto() {
+    const defs = { hudPosJoystick:{x:20,y:220}, hudPosBotones:{x:215,y:230}, hudPosPausa:{x:245,y:30} };
+    Object.entries(defs).forEach(([k,v]) => localStorage.setItem(k, JSON.stringify(v)));
+    configurarArrastreHud();
+}
+
+// ═══════════════════════════════════════════════
+// ─── PANTALLA DE CARGA ───
+// ═══════════════════════════════════════════════
+function continuarAlMenu() {
+    // Iniciar música al presionar continuar
+    iniciarSoundtrack();
+    // Ocultar pantalla de carga con transición
+    const pantallaCarga = document.getElementById('pantalla-carga');
+    pantallaCarga.classList.add('oculta');
+    setTimeout(() => { pantallaCarga.style.display = 'none'; }, 650);
+}
+
+function iniciarPantallaCarga() {
+    const barra = document.getElementById('carga-barra');
+    const label = document.getElementById('carga-label');
+    const btnContinuar = document.getElementById('btn-continuar');
+    const msgs = ['INICIALIZANDO...', 'CARGANDO RECURSOS...', 'CALIBRANDO SISTEMAS...', 'E.U.D. EN LÍNEA...', '¡LISTO!'];
+    let prog = 0;
+    const intervalo = setInterval(() => {
+        prog += Math.random() * 18 + 6;
+        if (prog >= 100) { prog = 100; clearInterval(intervalo); }
+        barra.style.width = prog + '%';
+        const msgIdx = Math.min(Math.floor(prog / 25), msgs.length - 1);
+        label.textContent = msgs[msgIdx];
+        if (prog >= 100) {
+            label.textContent = '¡LISTO!';
+            setTimeout(() => { btnContinuar.classList.add('visible'); }, 300);
+        }
+    }, 220);
+}
+
+// ─── INICIO: soundtrack + estado ───
+window.onload = () => {
+    const ajustes = JSON.parse(localStorage.getItem('gameSettings')) || {musica:true, efectos:true, volumen:80};
+    document.getElementById('musica').checked = ajustes.musica;
+    document.getElementById('efectos').checked = ajustes.efectos;
+    document.getElementById('volumen').value = ajustes.volumen;
+    document.getElementById('vol-display').textContent = ajustes.volumen + '%';
+
+    escalaActual = parseFloat(localStorage.getItem('controlEscala')) || 1.0;
+    let mar = parseInt(localStorage.getItem('controlMargen')) || 15;
+    document.getElementById('slider-tam').value = Math.round(escalaActual * 100);
+    document.getElementById('slider-pos').value = mar;
+    document.getElementById('val-tam').innerText = Math.round(escalaActual * 100) + '%';
+    document.getElementById('val-pos').innerText = mar + 'px';
+
+    const guardado = localStorage.getItem('heroeSeleccionado');
+    if (guardado && HEROES.includes(guardado)) {
+        const idx = HEROES.indexOf(guardado);
+        irASlide(idx);
+        const imgMap = { 'Brandon':'brandon.png', 'Kleydi':'kleydi.png', 'Nahomy':'nahomy.png', 'C-J':'cj.png' };
+        document.getElementById('preview-hero-main').src = imgMap[guardado] || 'brandon.png';
+    }
+
+    configurarArrastreHud();
+    actualizarEscalaSimulador();
+
+    // Lanzar pantalla de carga
+    iniciarPantallaCarga();
+};
+
+
+</script>
+</body>
+</html>
