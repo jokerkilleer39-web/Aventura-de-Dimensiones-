@@ -1,0 +1,1420 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Aventura de Dimensiones - Edición Definitiva</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght=600;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background: #02020a; color: white;
+            font-family: 'Orbitron', 'Impact', sans-serif;
+            height: 100vh; width: 100vw; overflow: hidden;
+            display: flex; flex-direction: column;
+            user-select: none; -webkit-user-select: none;
+        }
+
+        /* ── SISTEMA DE PANTALLAS SPA ── */
+        .pantalla-spa {
+            position: absolute; inset: 0;
+            display: none;
+            flex-direction: column;
+            z-index: 20;
+            width: 100%; height: 100%;
+            overflow: hidden;
+        }
+        .pantalla-spa.activa {
+            display: flex;
+        }
+
+        /* ── PANTALLA: MENÚ PRINCIPAL E INTRODUCCIÓN ── */
+        #screen-menu {
+            background: radial-gradient(circle at center, #0a0c24 0%, #02020a 100%);
+            justify-content: center; align-items: center; gap: 20px;
+            padding: 20px;
+        }
+        .menu-titulo {
+            font-size: 34px; font-weight: 900; text-align: center;
+            color: #00ffcc; text-shadow: 0 0 25px rgba(0,255,204,0.6);
+            letter-spacing: 3px; line-height: 1.2;
+        }
+        .menu-sub {
+            font-family: 'Rajdhani', sans-serif; font-size: 16px; color: #6070a0;
+            letter-spacing: 3px; text-transform: uppercase; margin-top: -5px;
+        }
+        .historia-intro-box {
+            width: 90%; max-width: 500px; 
+            background: linear-gradient(135deg, rgba(10,14,35,0.6) 0%, rgba(5,7,20,0.8) 100%);
+            border: 1px solid rgba(0,255,204,0.25); padding: 22px; border-radius: 12px; 
+            font-family: 'Rajdhani', sans-serif; font-size: 17px; color: #e0e6ff; 
+            line-height: 1.5; text-align: center; margin: 10px 0;
+            box-shadow: inset 0 0 20px rgba(0,255,204,0.08), 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        /* ── PANTALLA: DIÁLOGOS ESTILO CHAT ── */
+        #screen-dialogue {
+            background: linear-gradient(180deg, #02020f 0%, #05071a 100%);
+            justify-content: flex-end; align-items: center;
+            padding-bottom: 20px; cursor: pointer;
+        }
+        #chat-historial {
+            width: 92%; max-width: 600px; display: flex; flex-direction: column; 
+            gap: 14px; overflow-y: auto; padding: 20px 10px; margin-bottom: 80px; 
+            scroll-behavior: smooth; flex-grow: 1;
+        }
+        /* Ocultar barra de scroll visualmente manteniendo funcionalidad */
+        #chat-historial::-webkit-scrollbar { width: 4px; }
+        #chat-historial::-webkit-scrollbar-track { background: transparent; }
+        #chat-historial::-webkit-scrollbar-thumb { background: rgba(0,255,204,0.3); border-radius: 2px; }
+
+        .chat-burbuja {
+            display: flex; align-items: flex-start; gap: 12px;
+            background: linear-gradient(135deg, rgba(12,16,42,0.85) 0%, rgba(6,8,24,0.95) 100%);
+            border: 1px solid rgba(0,255,204,0.2); border-radius: 14px;
+            padding: 12px 14px; max-width: 88%;
+            align-self: flex-start;
+            animation: deslizarChat 0.3s cubic-bezier(0.1, 0.8, 0.2, 1) forwards;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        /* Estilo espejo para tus propios diálogos (Estilo Chat) */
+        .chat-burbuja.propio {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+            background: linear-gradient(135deg, rgba(10,35,30,0.85) 0%, rgba(4,12,10,0.95) 100%);
+            border: 1px solid rgba(0,255,204,0.4);
+        }
+        @keyframes deslizarChat {
+            from { opacity: 0; transform: translateY(25px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .chat-avatar {
+            width: 44px; height: 44px; border-radius: 50%;
+            border: 2px solid #00ffcc; background: #010105;
+            object-fit: cover; flex-shrink: 0;
+        }
+        .chat-contenido { display: flex; flex-direction: column; gap: 3px; flex-grow: 1; }
+        .chat-nombre { font-size: 11px; font-weight: 900; letter-spacing: 1px; }
+        .chat-texto { font-family: 'Rajdhani', sans-serif; font-size: 17px; color: #e0e6ff; line-height: 1.3; }
+
+        .chat-footer {
+            position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%);
+            width: 90%; max-width: 600px; display: flex; flex-direction: column;
+            align-items: center; gap: 6px; pointer-events: none;
+        }
+        .discurso-tap {
+            font-size: 9px; color: rgba(0,255,204,0.5); text-align: center;
+            letter-spacing: 1.5px; animation: parpadeo 1.2s infinite; pointer-events: auto;
+        }
+        #btn-dialogo-continuar { pointer-events: auto; display: none; margin-top: 4px; width: 100%; }
+
+        /* ── ENTORNO DE JUEGO (GAMEPLAY) ── */
+        #screen-gameplay { flex-direction: column; }
+        canvas { background: #02020a; flex-grow: 1; width: 100%; display: block; }
+
+        /* HUD SUPERIOR */
+        #hud-superior {
+            position: absolute; top: 0; left: 0; right: 0; height: 52px;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 12px; background: linear-gradient(180deg, rgba(2,2,18,0.92) 0%, rgba(2,2,18,0) 100%);
+            z-index: 10; gap: 8px;
+        }
+        .hud-vida { display: flex; flex-direction: column; gap: 3px; min-width: 110px; }
+        .hud-vida-label { font-size: 7px; letter-spacing: 2px; color: rgba(255,255,255,0.4); }
+        .hud-vida-bar { height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden; border: 1px solid rgba(255,255,255,0.06); }
+        #barra-vida-fill { height: 100%; background: linear-gradient(90deg, #ff0055, #ff4477); border-radius: 3px; transition: width 0.2s; box-shadow: 0 0 6px rgba(255,0,85,0.6); }
+        .hud-vida-num { font-size: 10px; font-weight: 700; color: #ff4477; font-family: 'Rajdhani', sans-serif; }
+        
+        /* HUD JEFE FINAL */
+        #hud-jefe {
+            position: absolute; top: 55px; left: 50%; transform: translateX(-50%);
+            width: 80%; max-width: 450px; display: none; flex-direction: column; gap: 3px; z-index: 10;
+        }
+        .hud-jefe-label { font-size: 8px; letter-spacing: 2px; color: #ff3344; text-align: center; font-weight: bold; }
+        .hud-jefe-bar { height: 8px; background: rgba(0,0,0,0.6); border-radius: 4px; overflow: hidden; border: 1px solid rgba(255,50,50,0.3); }
+        #barra-jefe-fill { height: 100%; background: linear-gradient(90deg, #ff0000, #ff5500); width: 100%; transition: width 0.1s; }
+
+        /* Tiempo y Acciones */
+        .hud-tiempo { display: flex; flex-direction: column; align-items: center; gap: 1px; }
+        .hud-tiempo-label { font-size: 7px; letter-spacing: 2px; color: rgba(255,255,255,0.35); }
+        #hud-timer { font-size: 22px; font-weight: 900; color: #ffcc00; line-height: 1; text-shadow: 0 0 12px rgba(255,204,0,0.6); }
+        #hud-timer.urgente { color: #ff0055; text-shadow: 0 0 12px rgba(255,0,85,0.8); animation: parpadeo 0.5s infinite; }
+        @keyframes parpadeo { 0%,100%{opacity:1} 50%{opacity:0.5} }
+
+        .hud-acciones { display: flex; gap: 6px; align-items: center; }
+        .btn-hud-accion { background: rgba(10,12,30,0.85); border-radius: 6px; font-family: 'Orbitron', sans-serif; font-size: 8px; font-weight: 700; letter-spacing: 1px; padding: 6px 10px; cursor: pointer; display: flex; align-items: center; gap: 4px; backdrop-filter: blur(4px); }
+        #btn-pausa { border: 1px solid rgba(255,204,0,0.4); color: #ffcc00; }
+        #btn-salir { border: 1px solid rgba(255,0,85,0.4); color: #ff4466; }
+
+        /* CONTROLES INFERIORES */
+        .controles-espaciales {
+            display: flex; width: 100%; height: 190px;
+            background: linear-gradient(180deg, rgba(8,9,20,0) 0%, rgba(8,9,20,0.98) 25%, #080914 100%);
+            align-items: center; position: relative;
+        }
+        .bloque-izquierdo { position: absolute; left: 15px; display: flex; align-items: center; }
+        .bloque-derecho   { position: absolute; right: 15px; display: flex; align-items: center; }
+
+        .joystick-container {
+            width: 120px; height: 120px; background: rgba(0,255,204,0.04); border: 2px solid rgba(0,255,204,0.3); border-radius: 50%;
+            position: relative; display: flex; justify-content: center; align-items: center; touch-action: none;
+            box-shadow: 0 0 20px rgba(0,255,204,0.07), inset 0 0 20px rgba(0,255,204,0.03);
+        }
+        .joystick-knob { width: 46px; height: 46px; background: radial-gradient(circle at 35% 35%, #44ffdd, #00cc99); border-radius: 50%; position: absolute; box-shadow: 0 0 14px #00ffcc, 0 0 30px rgba(0,255,204,0.3); pointer-events: none; }
+
+        .botonera-disparo { display: flex; flex-direction: row; align-items: center; gap: 12px; }
+        .btn-shoot {
+            width: var(--btn-shoot-size, 82px); height: var(--btn-shoot-size, 82px); background: radial-gradient(circle at 35% 35%, #ff3366, #cc0033); border: 2px solid rgba(255,255,255,0.3); color: white; border-radius: 50%; font-family: 'Orbitron', sans-serif; font-size: var(--btn-label-font, 11px); font-weight: 700; letter-spacing: 1px; box-shadow: 0 0 20px rgba(255,0,85,0.5), inset 0 1px 0 rgba(255,255,255,0.2); display: flex; justify-content: center; align-items: center; transition: transform 0.1s;
+        }
+        .btn-shoot:active { transform: scale(0.93); }
+        .btn-poder-esp {
+            background: radial-gradient(circle at 35% 35%, #ffdd44, #cc9900); border-radius: 50%; width: var(--btn-shoot-size, 82px); height: var(--btn-shoot-size, 82px); font-size: var(--btn-power-font, 9px); font-family: 'Orbitron', sans-serif; font-weight: 700; color: #0a0600; letter-spacing: 0.5px; border: 2px solid rgba(255,255,255,0.3); text-transform: uppercase; line-height: 1.3; box-shadow: 0 0 16px rgba(255,204,0,0.45), inset 0 1px 0 rgba(255,255,255,0.3); position: relative; overflow: hidden; display: flex; justify-content: center; align-items: center; text-align: center; transition: transform 0.1s;
+        }
+        .btn-poder-esp:active { transform: scale(0.93); }
+        .btn-poder-esp:disabled { background: radial-gradient(circle at 35% 35%, #3a3a3a, #222); color: #555; border-color: rgba(255,255,255,0.08); box-shadow: none; }
+
+        /* ── INTERFACES OVERLAY ── */
+        .overlay-pantalla {
+            position: absolute; inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center; background: rgba(2,2,18,0.9); backdrop-filter: blur(6px); z-index: 30; gap: 14px;
+        }
+        .overlay-pantalla.visible { display: flex; }
+        .overlay-titulo { font-family: 'Orbitron', sans-serif; font-size: 28px; font-weight: 900; letter-spacing: 3px; text-align: center; }
+        .overlay-sub { font-family: 'Rajdhani', sans-serif; font-size: 14px; color: #6070a0; letter-spacing: 1px; }
+        .overlay-divider { width: 80px; height: 1px; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent); }
+
+        .btn-overlay {
+            width: 220px; padding: 13px 0; border-radius: 8px; font-family: 'Orbitron', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 2px; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; justify-content: center; gap: 8px; border: none;
+        }
+        .btn-overlay:active { transform: scale(0.97); }
+        .btn-overlay.primario { background: linear-gradient(135deg, #00ffcc, #00cc99); color: #030a12; box-shadow: 0 4px 20px rgba(0,255,204,0.25); }
+        .btn-overlay.peligro { background: rgba(255,0,85,0.08); border: 1px solid rgba(255,0,85,0.3); color: #ff4466; }
+
+        #pausa-titulo { color: #ffcc00; text-shadow: 0 0 20px rgba(255,204,0,0.4); }
+        #gameover-titulo { color: #ff0055; text-shadow: 0 0 20px rgba(255,0,85,0.5); }
+
+        /* PANTALLAS GENERALES DE SALIDA SPA */
+        #screen-gameover { background: rgba(10,2,5,0.95); justify-content: center; align-items: center; gap: 15px; }
+        #screen-victory { background: radial-gradient(circle at center, #021a14 0%, #000205 100%); justify-content: center; align-items: center; gap: 20px; cursor: pointer; }
+        .txt-continuara { font-size: 42px; font-weight: 900; color: #00ffcc; text-shadow: 0 0 35px rgba(0,255,204,0.8); letter-spacing: 5px; animation: pulsoLuz 2s infinite ease-in-out; text-align: center; }
+        
+        @keyframes pulsoLuz {
+            0%, 100% { transform: scale(1); text-shadow: 0 0 25px rgba(0,255,204,0.6); }
+            50% { transform: scale(1.04); text-shadow: 0 0 45px rgba(0,255,204,1); }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="screen-menu" class="pantalla-spa">
+        <div class="menu-titulo">AVENTURA DE<br>DIMENSIONES</div>
+        <div class="menu-sub">CAPITULO 1</div>
+        <div class="historia-intro-box">
+            hemos encontrado anomalias en nuestro espacio tiempo, estamos consientes de que no es algo facil pero la E.U.D tiene que hacer algo nuestros mejores capitanes y tripulantes tienen que defender esta dimension este universo y este world a como de lugar.<br><br>
+            El infame Nordix ha tomado el control del nucleo central de esta dimension. Nuestro equipo especial ha sido desplegado en una misión desesperada para estabilizar los sectores y repeler la armada mecánica. ¡Reactores listos para el salto de fe!
+        </div>
+        <button class="btn-overlay primario" onclick="iniciarFlujoHistoria()">DESPLIEGUE DE NAVE</button>
+    </div>
+
+    <div id="screen-dialogue" class="pantalla-spa" onclick="avanzarDialogo()">
+        <div id="chat-historial">
+            </div>
+        <div class="chat-footer">
+            <div class="discurso-tap">TAP EN LA PANTALLA PARA AVANZAR TRANSMISIÓN</div>
+            <button class="btn-overlay primario" id="btn-dialogo-continuar">ENTRAR AL AGUJERO DE GUSANO</button>
+        </div>
+    </div>
+
+    <div id="screen-gameplay" class="pantalla-spa">
+        <div id="hud-superior">
+            <div class="hud-vida">
+                <div class="hud-vida-label">◈ VIDA</div>
+                <div class="hud-vida-bar"><div id="barra-vida-fill" style="width:100%"></div></div>
+                <div class="hud-vida-num" id="hud-vida-num">150 / 150</div>
+            </div>
+            <div class="hud-tiempo">
+                <div class="hud-tiempo-label" id="timer-label">TIEMPO</div>
+                <div id="hud-timer">90</div>
+            </div>
+            <div class="hud-acciones">
+                <button class="btn-hud-accion" id="btn-pausa" onclick="togglePausa()">⏸ PAUSA</button>
+                <button class="btn-hud-accion" id="btn-salir" onclick="irAlMenuPrincipal()">✕ SALIR</button>
+            </div>
+        </div>
+
+        <div id="hud-jefe">
+            <div class="hud-jefe-label">⚠️ AMENAZA DIMENSIONAL: NORDIX ⚠️</div>
+            <div class="hud-jefe-bar"><div id="barra-jefe-fill"></div></div>
+        </div>
+
+        <canvas id="lienzoEspacial"></canvas>
+
+        <div class="controles-espaciales" id="barra-controles">
+            <div class="bloque-izquierdo" id="bloque-izq">
+                <div class="joystick-container" id="joystick">
+                    <div class="joystick-knob" id="joystick-knob"></div>
+                </div>
+            </div>
+            <div class="bloque-derecho" id="bloque-der">
+                <div class="botonera-disparo">
+                    <button class="btn-poder-esp" id="btn-especial" ontouchstart="superPoder()">GOLPE<br>POTENTE</button>
+                    <button class="btn-shoot" ontouchstart="disparar()">ATAQUE</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="overlay-pantalla" id="overlay-pausa">
+            <div class="overlay-titulo" id="pausa-titulo">PAUSADO</div>
+            <div class="overlay-sub">Modulación del tiempo activa</div>
+            <div class="overlay-divider"></div>
+            <button class="btn-overlay primario" onclick="togglePausa()">▶ REANUDAR</button>
+            <button class="btn-overlay peligro" onclick="irAlMenuPrincipal()">✕ SALIR AL MENÚ</button>
+        </div>
+    </div>
+
+    <div id="screen-gameover" class="pantalla-spa">
+        <div class="overlay-titulo" id="gameover-titulo">GAME OVER</div>
+        <div class="overlay-sub" id="gameover-sub">Tu nave ha sido desintegrada</div>
+        <div class="overlay-divider"></div>
+        <button class="btn-overlay primario" onclick="reiniciarNivelActual()">↺  REGRESEMOS EL TIEMPO</button>
+        <button class="btn-overlay peligro" onclick="irAlMenuPrincipal()">✕ MENÚ PRINCIPAL</button>
+    </div>
+
+    <div id="screen-victory" class="pantalla-spa" onclick="finalizarJuegoYMenu()">
+        <div class="txt-continuara">¿CONTINUARÁ?</div>
+        <div class="overlay-sub" style="color: #00ffcc; text-align: center;">Parece todo muy tranquilo...<br>Toca en cualquier parte para volver.</div>
+    </div>
+
+    <audio id="bg-music-loop" loop></audio>
+
+<script>
+    const canvas = document.getElementById('lienzoEspacial');
+    const ctx = canvas.getContext('2d');
+
+    // ── AUDIO INTEGRADO Y SINTETIZADOR API ───────────────────────────────
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    let audioCtx = null;
+    const bgMusic = document.getElementById('bg-music-loop');
+
+    function initAudio() { if (!audioCtx) audioCtx = new AudioCtx(); }
+    
+    function playMusicaJefe(src) {
+        bgMusic.src = src;
+        bgMusic.volume = 0.4;
+        bgMusic.play().catch(e => console.log("Interacción requerida para audio"));
+    }
+    function stopMusica() { bgMusic.pause(); bgMusic.src = ""; }
+
+    function sonidoDisparo() {
+        if (!audioCtx) return;
+        const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination); osc.type = 'square';
+        osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(200, audioCtx.currentTime + 0.08);
+        gain.gain.setValueAtTime(0.18, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+    }
+
+    function sonidoEspecial() {
+        if (!audioCtx) return;
+        [0, 0.05, 0.1].forEach((t, i) => {
+            const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination); osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(300 + i * 150, audioCtx.currentTime + t);
+            osc.frequency.exponentialRampToValueAtTime(80, audioCtx.currentTime + t + 0.2);
+            gain.gain.setValueAtTime(0.22, audioCtx.currentTime + t);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + t + 0.25);
+            osc.start(audioCtx.currentTime + t); osc.stop(audioCtx.currentTime + t + 0.3);
+        });
+    }
+
+  function sonidoDanio() {
+        if (!audioCtx) return;
+        const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination); osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(180, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(60, audioCtx.currentTime + 0.15);
+        gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.2);
+    }
+
+    function sonidoExplosion() {
+        if (!audioCtx) return;
+        const buf = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.25, audioCtx.sampleRate);
+        const data = buf.getChannelData(0);
+        for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / data.length);
+        const src = audioCtx.createBufferSource(), gain = audioCtx.createGain();
+        src.buffer = buf; src.connect(gain); gain.connect(audioCtx.destination);
+        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.25);
+        src.start();
+    }
+
+    function sonidoVictoria() {
+        if (!audioCtx) return;
+        const notas = [523, 659, 784, 1047];
+        notas.forEach((freq, i) => {
+            const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination); osc.type = 'sine';
+            const t = audioCtx.currentTime + i * 0.15;
+            osc.frequency.setValueAtTime(freq, t); gain.gain.setValueAtTime(0.2, t);
+            gain.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+            osc.start(t); osc.stop(t + 0.5);
+        });
+    }
+
+    function sonidoRompimiento() {
+        if (!audioCtx) return;
+        const buf = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.18, audioCtx.sampleRate);
+        const data = buf.getChannelData(0);
+        for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / data.length) * 0.7;
+        const src = audioCtx.createBufferSource(), gain = audioCtx.createGain();
+        src.buffer = buf; src.connect(gain); gain.connect(audioCtx.destination);
+        gain.gain.setValueAtTime(0.22, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
+        src.start();
+    }
+
+    document.addEventListener('touchstart', () => { initAudio(); }, { once: true });
+    document.addEventListener('mousedown', () => { initAudio(); }, { once: true });
+
+    // ── CONFIGURACIÓN CENTRALIZADA DE NIVELES Y SPA ────────────────────
+    let estadoActual = 'MENU'; 
+    let nivelActual = 1;
+    let heroeSeleccionado = localStorage.getItem('heroeSeleccionado') || "Brandon"; 
+
+    const CONFIG_NIVELES = {
+        1: { duracion: 90,  velEnemigo: 1.8, spawnRateEnemigo: 150, spawnRateObstaculo: 250, jefe: false },
+        2: { duracion: 120, velEnemigo: 2.2, spawnRateEnemigo: 130, spawnRateObstaculo: 220, jefe: false },
+        3: { duracion: 120, velEnemigo: 2.6, spawnRateEnemigo: 110, spawnRateObstaculo: 190, jefe: false },
+        4: { duracion: 150, velEnemigo: 3.0, spawnRateEnemigo: 95,  spawnRateObstaculo: 160, jefe: false },
+        5: { duracion: 150, velEnemigo: 3.4, spawnRateEnemigo: 80,  spawnRateObstaculo: 130, jefe: false },
+        6: { duracion: 0,   velEnemigo: 0,   spawnRateEnemigo: 9999, spawnRateObstaculo: 200, jefe: true } 
+    };
+
+    // ── DATA DE DIÁLOGOS DE HISTORIA ──
+    const HISTORIA_DIALOGOS = {
+        1: [
+            { spk: "BRANDON", txt: "¿estan ahi? ¿no se si me escuchan?" },
+            { spk: "KLEYDI", txt: "Aqui la capitana de la nave Genesis, que necesitas." },
+            { spk: "BRANDON", txt: "vaya vaya ¿te mandaron a vigilarme o algo asi?." },
+            { spk: "KLEYDI", txt: "creeme yo tampoco estoy feliz de estar aqui." },
+            { spk: "E.U.D", txt: "Capitanes listos? desplegaremos sus naves" }
+        ],
+        2: [
+            { spk: "C-J", txt: "¡Buen trabajo destruyendo la primera oleada! Pero esto apenas empieza chicos." },
+            { spk: "NAHOMY", txt: "terminemos con esto ya, quiero ir a casa tengo hambre." },
+            { spk: "E.U.D", txt: "Alerta de proximidad incrementada. Saltando al sector de la anomalía 2." }
+        ],
+        3: [
+            { spk: "BRANDON", txt: "Quien diria que la capitana es muy ruda, ¿te estas divirtiendo?!" },
+            { spk: "KLEYDI", txt: "hola capitan, le sugiero que ponga atencion podria estrellar con algun meteorito." },
+            { spk: "BRANDON", txt: "Yo tambien estoy feliz de verte." },
+            { spk: "E.U.D", txt: "Capitanes atencion nos aproximamos rapidamente al final del agujero de gusano." }
+        ],
+        4: [
+            { spk: "NAHOMY", txt: "esto es muy facil nadie puede contra mis Bombas Limon JAJAJA." },
+            { spk: "C-J", txt: "pequeña pon atencion es un campo electromagnético artificial. Alguien o algo nos está arrastrando." },
+            { spk: "E.U.D", txt: "Iniciando protocolo evasivo de Nivel 4. Densidad crítica detectada Tripulantes accion evasiva." }
+        ],
+        5: [
+            { spk: "BRANDON", txt: "Estamos cerca... creo que me adentrare a ver que sucede." },
+            { spk: "KLEYDI", txt: "Ten mucho cuidado Brandon." },
+            { spk: "BRANDON", txt: "lo tendre... nena" },
+            { spk: "KLEYDI", txt: "..." },
+            { spk: "E.U.D", txt: "¡Maldicion! perdimos comunicacion con Brandon, ¡Atencion a todos! el capitan Joker de la nave apocalipto no responde." }
+        ],
+        6: [
+            { spk: "NORDIX", txt: "¿Tu quien eres humano estupido?... ¿Creían que sus cascarones de metal salvarían sus dimensiones?" },
+            { spk: "BRANDON", txt: "¡Que tierno eres, que lastima que en 5 minutos no habra nada mas que tus cenizas... llamame Joker." },
+            { spk: "NORDIX", txt: "¡que arrogante eres, yo soy el fin de sus líneas de tiempo!" }
+
+        ],
+        7: [ 
+            { spk: "NORDIX", txt: "No... ¡Imposible! malditos sean todos ... ¡siganlo... a el!" },
+            { spk: "BRANDON", txt: "lo siento nadie que sepa de mi sale vivo para contarlo y mucho menos cuando tengo ayuda de los mejores." },
+            { spk: "KLEYDI", txt: "Esperen... los sensores detectan una fluctuación masiva en otra coordenada lejana..." }
+        ]
+    };
+
+    let dialogoIndice = 0;
+    let dialogoActualLista = [];
+
+    // Cambiador de estados SPA de interfaz
+    function cambiarEstadoSPA(nuevoEstado) {
+        estadoActual = nuevoEstado;
+        document.querySelectorAll('.pantalla-spa').forEach(p => p.classList.remove('activa'));
+        
+        if (nuevoEstado === 'MENU') {
+            document.getElementById('screen-menu').classList.add('activa');
+            stopMusica();
+        } else if (nuevoEstado === 'STORY_DIALOGUE') {
+            document.getElementById('screen-dialogue').classList.add('activa');
+        } else if (nuevoEstado === 'GAMEPLAY') {
+            document.getElementById('screen-gameplay').classList.add('activa');
+        } else if (nuevoEstado === 'GAMEOVER') {
+            document.getElementById('screen-gameover').classList.add('activa');
+        } else if (nuevoEstado === 'VICTORY') {
+            document.getElementById('screen-victory').classList.add('activa');
+        }
+    }
+
+    function iniciarFlujoHistoria() {
+        nivelActual = 1;
+        cargarEscenaDialogos(1);
+    }
+
+    function saltarAlJefe() {
+        nivelActual = 6;
+        cambiarEstadoSPA('GAMEPLAY');
+        reestablecerEstructurasJuego(6);
+    }
+
+    function cargarEscenaDialogos(IDHistoria) {
+        dialogoIndice = 0;
+        dialogoActualLista = HISTORIA_DIALOGOS[IDHistoria];
+        document.getElementById('chat-historial').innerHTML = ''; 
+        cambiarEstadoSPA('STORY_DIALOGUE');
+        document.getElementById('btn-dialogo-continuar').style.display = 'none';
+        presentarLineaDialogo();
+    }
+
+    function presentarLineaDialogo() {
+        if (dialogoIndice < dialogoActualLista.length) {
+            const linea = dialogoActualLista[dialogoIndice];
+            const historial = document.getElementById('chat-historial');
+            
+            const spkImgKey = linea.spk.toLowerCase().replace("-", "");
+            const srcImagen = `dialogo_${spkImgKey}.png`;
+            
+            let colorTag = '#ffcc00';
+            if (linea.spk === 'NORDIX') colorTag = '#ff0055';
+            if (linea.spk === 'SISTEMA') colorTag = '#00ffcc';
+            if (linea.spk === 'KLEYDI') colorTag = '#ff4477';
+            if (linea.spk === 'NAHOMY') colorTag = '#ffea00';
+            if (linea.spk === 'C-J') colorTag = '#a060ff';
+
+            const esBrandon = linea.spk === 'BRANDON';
+
+            const burbuja = document.createElement('div');
+            burbuja.className = `chat-burbuja ${esBrandon ? 'propio' : ''}`;
+            burbuja.innerHTML = `
+                <img src="./${srcImagen}" class="chat-avatar" onerror="this.src='./icono.png';">
+                <div class="chat-contenido">
+                    <div class="chat-nombre" style="color: ${colorTag}; text-align: ${esBrandon ? 'right' : 'left'}">${linea.spk}</div>
+                    <div class="chat-texto" style="text-align: ${esBrandon ? 'right' : 'left'}">${linea.txt}</div>
+                </div>
+            `;
+            
+            historial.appendChild(burbuja);
+            
+            historial.scrollTop = historial.scrollHeight;
+
+            if (dialogoIndice === dialogoActualLista.length - 1) {
+                document.getElementById('btn-dialogo-continuar').style.display = 'block';
+                if (nivelActual === 7) {
+                    document.getElementById('btn-dialogo-continuar').textContent = "SIGUIENTE ▶";
+                    document.getElementById('btn-dialogo-continuar').onclick = function(e) {
+                        e.stopPropagation();
+                        window.location.href = 'cinematica.html';
+                    };
+                } else if(CONFIG_NIVELES[nivelActual] && CONFIG_NIVELES[nivelActual].jefe) {
+                    document.getElementById('btn-dialogo-continuar').textContent = "⚠️ ENFRENTAR A NORDIX";
+                    document.getElementById('btn-dialogo-continuar').onclick = function(e) { e.stopPropagation(); comenzarNivelCargado(); };
+                } else {
+                    document.getElementById('btn-dialogo-continuar').textContent = `INICIAR NIVEL ${nivelActual}`;
+                    document.getElementById('btn-dialogo-continuar').onclick = function(e) { e.stopPropagation(); comenzarNivelCargado(); };
+                }
+            }
+        }
+    }
+     function avanzarDialogo() {
+        if (dialogoIndice < dialogoActualLista.length - 1) {
+            dialogoIndice++;
+            presentarLineaDialogo();
+        }
+    }
+
+    function comenzarNivelCargado() {
+        cambiarEstadoSPA('GAMEPLAY');
+        reestablecerEstructurasJuego(nivelActual);
+    }
+
+    function irAlMenuPrincipal() {
+        juegoTerminado = true;
+        enPausa = false;
+        document.getElementById('overlay-pausa').classList.remove('visible');
+        clearInterval(temporizador);
+        cambiarEstadoSPA('MENU');
+    }
+
+    function reiniciarNivelActual() {
+        cambiarEstadoSPA('GAMEPLAY');
+        reestablecerEstructurasJuego(nivelActual);
+    }
+
+    function finalizarJuegoYMenu() {
+        cambiarEstadoSPA('MENU');
+    }
+
+    // ── MOTOR GRÁFICO Y VARIABLES DE RENDERIZADO REUTILIZADAS ───────────
+    let nombreArchivo = heroeSeleccionado.toLowerCase().replace("-", "");
+    function ajustarPantalla() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight - 190;
+    }
+    window.addEventListener('resize', ajustarPantalla);
+
+    function cargarImagen(src) {
+        const img = new Image(); img.src = src;
+        img.onload = () => { img.lista = true; };
+        return img;
+    }
+
+    let imgNave, imgLaserHeroe, imgLaserEspecial;
+    const imgVillano       = cargarImagen('villano.png');
+    const imgObstaculo     = cargarImagen('obstaculo.png');
+    const imgLaserVillano  = cargarImagen('proyectil_villano.png');
+    const imgJefe          = cargarImagen('jefe1.png');
+
+    // ══════════════════════════════════════════════════════════════════
+    // CONFIGURACIÓN DE IMÁGENES DE PROYECTILES PERSONALIZADAS
+    // ── Coloca tus imágenes en la misma carpeta que este archivo ──────
+    // Para usar UNA sola imagen para todos los héroes:
+    //   Cambia el valor de IMG_PROYECTIL_PERSONALIZADO por el nombre de tu archivo.
+    //   Ejemplo: 'mi_bala.png'
+    // Para usar imágenes distintas por héroe, NO cambies esta variable
+    //   y en su lugar renombra tus archivos como:
+    //   proyectil_brandon.png, proyectil_kleydi.png, proyectil_nahomy.png, proyectil_cj.png
+    //   especial_brandon.png,  especial_kleydi.png,  especial_nahomy.png,  especial_cj.png
+    // Deja en null para usar el nombre automático por héroe.
+    const IMG_PROYECTIL_PERSONALIZADO = null; // Ej: 'mi_bala.png'
+    const IMG_ESPECIAL_PERSONALIZADO  = null; // Ej: 'mi_especial.png'
+    // ══════════════════════════════════════════════════════════════════
+
+    let stats = {
+        "Kleydi":  { vidaMax: 170, dmgBase: 10, cooldownEsp: 3000, txtEsp: "CUTE BOMB" },
+        "Brandon": { vidaMax: 250, dmgBase: 20, cooldownEsp: 3000, txtEsp: "BLASTERCOOL" },
+        "Nahomy":  { vidaMax: 150, dmgBase: 15, cooldownEsp: 2000, txtEsp: "BOMBAS LIMON" },
+        "C-J":     { vidaMax: 200, dmgBase: 20, cooldownEsp: 6000, txtEsp: "SUPER EMP" }
+    };
+
+    let pStat, nave;
+    function inicializarEstadisticasHeroe() {
+        nombreArchivo = heroeSeleccionado.toLowerCase().replace("-", "");
+        imgNave          = cargarImagen('nave_' + nombreArchivo + '.png');
+        // Usa imagen personalizada si está definida, sino usa la automática por héroe
+        imgLaserHeroe    = cargarImagen(IMG_PROYECTIL_PERSONALIZADO || ('proyectil_' + nombreArchivo + '.png'));
+        imgLaserEspecial = cargarImagen(IMG_ESPECIAL_PERSONALIZADO  || ('especial_'  + nombreArchivo + '.png'));
+
+        pStat = stats[heroeSeleccionado] || stats["Brandon"];
+        document.getElementById('btn-especial').innerHTML = pStat.txtEsp.replace(/ /g, "<br>");
+    }
+
+    let lasers, lasersEnemigos, enemigos, obstaculos;
+    let estrellas = [], galaxias = [], esferasVida = [];
+    let particulas = [], misilesTeledirigidos = [];
+    let esferasGeneradas, frames, tiempoRestante;
+    let juegoTerminado, victoria, enPausa;
+    let portalAngulo = 0;
+    let portal = { x: -200, y: 0, w: 110, h: 110, activo: false }; // w,h ligeramente mayores para el diseño visual
+    let temporizador = null;
+
+    let jefeNordix = {
+        activo: false, x: 0, y: 0, w: 160, h: 160,
+        vida: 5000, vidaMax: 5000, dirY: 1, velY: 2,
+        ultimoAtaqueElectrico: 0, ultimoMeteoritoCielos: 0, ultimoMisil: 0,
+        radioPulso: 0, pulsoActivo: false, enFuria: false
+    };
+
+    function aplicarConfiguracionBotones() {
+        let escala = parseFloat(localStorage.getItem('controlEscala')) || 1.0;
+        let margen = parseInt(localStorage.getItem('controlMargen')) || 15;
+        document.getElementById('bloque-izq').style.left = margen + "px";
+        document.getElementById('bloque-der').style.right = margen + "px";
+        let root = document.documentElement;
+        root.style.setProperty('--btn-shoot-size', (82 * escala) + 'px');
+        root.style.setProperty('--btn-power-font', (9 * escala) + 'px');
+        root.style.setProperty('--btn-label-font', (11 * escala) + 'px');
+    }
+    function reestablecerEstructurasJuego(IDNivel) {
+        ajustarPantalla();
+        inicializarEstadisticasHeroe();
+        aplicarConfiguracionBotones();
+
+        const config = CONFIG_NIVELES[IDNivel];
+        
+        nave = {
+            x: 50, y: canvas.height / 2 - 20, w: 65, h: 45, vx: 0, vy: 0,
+            vida: pStat.vidaMax, vidaMax: pStat.vidaMax,
+            escudo: heroeSeleccionado === "Nahomy" ? 2 : 0,
+            ultimoEspecial: 0, listoEsp: true
+        };
+
+        lasers = []; lasersEnemigos = []; enemigos = []; obstaculos = [];
+        esferasVida = []; particulas = []; misilesTeledirigidos = [];
+        esferasGeneradas = 0; frames = 0;
+        juegoTerminado = false; victoria = false; enPausa = false;
+        
+        portal.activo = false; portal.x = -300;
+        
+        if (config.jefe) {
+            jefeNordix.activo = true;
+            jefeNordix.vida = 5000;
+            jefeNordix.vidaMax = 5000;
+            jefeNordix.x = canvas.width - 200;
+            jefeNordix.y = canvas.height / 2 - 80;
+            jefeNordix.enFuria = false;
+            jefeNordix.pulsoActivo = false;
+            jefeNordix.radioPulso = 0;
+            
+            tiempoRestante = 0;
+            document.getElementById('hud-jefe').style.display = 'flex';
+            document.getElementById('timer-label').textContent = "JEFE";
+            document.getElementById('hud-timer').textContent = "NORDIX";
+            document.getElementById('hud-timer').classList.remove('urgente');
+            
+            playMusicaJefe('musicfinal.mp3');
+        } else {
+            jefeNordix.activo = false;
+            tiempoRestante = config.duracion;
+            document.getElementById('hud-jefe').style.display = 'none';
+            document.getElementById('timer-label').textContent = "TIEMPO";
+            document.getElementById('hud-timer').textContent = tiempoRestante;
+            stopMusica();
+        }
+
+        actualizarHUD();
+
+        clearInterval(temporizador);
+        temporizador = setInterval(() => {
+            if (!juegoTerminado && !enPausa && !config.jefe) {
+                tiempoRestante--;
+                actualizarHUD();
+                if (tiempoRestante <= 0) {
+                    tiempoRestante = 0;
+                    clearInterval(temporizador);
+                    activarPortalMeta();
+                }
+            }
+        }, 1000);
+
+        requestAnimationFrame(gameLoop);
+    }
+    if(estrellas.length === 0) {
+        for (let i = 0; i < 120; i++) {
+            estrellas.push({
+                x: Math.random() * window.innerWidth,
+                y: Math.random() * window.innerHeight,
+                s: Math.random() * 2.2 + 0.3,
+                vel: Math.random() * 0.4 + 0.1,
+                bri: Math.random(),
+                capa: Math.floor(Math.random() * 3)
+            });
+        }
+    }
+    const paletas = [[138,43,226],[0,80,200],[180,20,70],[0,160,140],[200,80,0],[50,0,160]];
+    function crearGalaxia(xFija) {
+        const [r,g,b] = paletas[Math.floor(Math.random()*paletas.length)];
+        return {
+            x: xFija !== undefined ? xFija : canvas.width + 300,
+            y: Math.random() * canvas.height,
+            rx: 70 + Math.random()*130, ry: 35 + Math.random()*75,
+            rot: Math.random()*Math.PI, r,g,b,
+            alpha: 0.06 + Math.random()*0.1,
+            vx: -(0.1 + Math.random()*0.15),
+            tipo: Math.floor(Math.random()*3),
+            pts: Array.from({length:25},()=>({
+                ox:(Math.random()-0.5)*2, oy:(Math.random()-0.5)*2,
+                s:Math.random()*1.5+0.3, a:Math.random()*0.6+0.2
+            }))
+        };
+    }
+    if(galaxias.length === 0) { for (let i = 0; i < 4; i++) galaxias.push(crearGalaxia(Math.random()*window.innerWidth)); }
+
+    function actualizarHUD() {
+        if(estadoActual !== 'GAMEPLAY') return;
+        const pct = Math.max(0, nave.vida / nave.vidaMax) * 100;
+        document.getElementById('barra-vida-fill').style.width = pct + '%';
+        document.getElementById('hud-vida-num').textContent = Math.max(0, nave.vida) + ' / ' + nave.vidaMax;
+        
+        if (!CONFIG_NIVELES[nivelActual].jefe) {
+            const timerEl = document.getElementById('hud-timer');
+            timerEl.textContent = tiempoRestante;
+            timerEl.classList.toggle('urgente', tiempoRestante <= 10);
+        } else {
+            const pctJefe = Math.max(0, jefeNordix.vida / jefeNordix.vidaMax) * 100;
+            document.getElementById('barra-jefe-fill').style.width = pctJefe + '%';
+        }
+    }
+    const joystick = document.getElementById('joystick');
+    const joystickKnob = document.getElementById('joystick-knob');
+    const maxRadius = 35;
+
+    function manejarJoystick(e) {
+        if(estadoActual !== 'GAMEPLAY' || enPausa) return;
+        e.preventDefault();
+        const rect = joystick.getBoundingClientRect();
+        const touch = e.targetTouches[0];
+        let dx = touch.clientX - (rect.left + rect.width/2);
+        let dy = touch.clientY - (rect.top + rect.height/2);
+        const d = Math.sqrt(dx*dx+dy*dy);
+        if (d > maxRadius) { dx=(dx/d)*maxRadius; dy=(dy/d)*maxRadius; }
+        joystickKnob.style.transform = `translate(${dx}px,${dy}px)`;
+        nave.vx = (dx/maxRadius)*4.5;
+        nave.vy = (dy/maxRadius)*4.5;
+    }
+    joystick.addEventListener('touchstart', manejarJoystick, {passive:false});
+    joystick.addEventListener('touchmove',  manejarJoystick, {passive:false});
+    joystick.addEventListener('touchend', () => {
+        joystickKnob.style.transform = 'translate(0px,0px)';
+        nave.vx = 0; nave.vy = 0;
+    });
+
+    function togglePausa() {
+        if (juegoTerminado) return;
+        enPausa = !enPausa;
+        document.getElementById('btn-pausa').innerHTML = enPausa ? '▶ REANUDAR' : '⏸ PAUSA';
+        document.getElementById('overlay-pausa').classList.toggle('visible', enPausa);
+        if (!enPausa) requestAnimationFrame(gameLoop);
+    }
+
+    function disparar() {
+        if (juegoTerminado || enPausa || estadoActual !== 'GAMEPLAY') return;
+        initAudio(); sonidoDisparo();
+        // Las dimensiones w,h deben ajustarse según la imagen proporcionada. Usamos valores por defecto.
+        if (heroeSeleccionado === "C-J") {
+            lasers.push({x:nave.x+nave.w, y:nave.y+5,         w:32,h:12, dmg:pStat.dmgBase, esp:false});
+            lasers.push({x:nave.x+nave.w, y:nave.y+nave.h-10, w:32,h:12, dmg:pStat.dmgBase, esp:false});
+        } else {
+            lasers.push({x:nave.x+nave.w, y:nave.y+nave.h/2-6, w:32,h:12, dmg:pStat.dmgBase, esp:false});
+        }
+    }
+
+    function superPoder() {
+        if (!nave.listoEsp || juegoTerminado || enPausa || estadoActual !== 'GAMEPLAY') return;
+        initAudio(); sonidoEspecial();
+        nave.ultimoEspecial = Date.now(); nave.listoEsp = false;
+        // Dimensiones w,h de especiales deben ajustarse a las imágenes proporcionadas.
+        if (heroeSeleccionado === "Kleydi") {
+            lasers.push({x:nave.x+nave.w, y:nave.y-12, w:60,h:80, dmg:30, esp:true, multi:true});
+        } else if (heroeSeleccionado === "Brandon") {
+            [-2,-0.7,0.7,2].forEach(vy =>
+                lasers.push({x:nave.x+nave.w, y:nave.y+nave.h/2, w:50,h:15, dmg:40, esp:true, vy})
+            );
+        } else if (heroeSeleccionado === "Nahomy") {
+            for (let i=0;i<5;i++)
+                lasers.push({x:nave.x+nave.w, y:nave.y+nave.h/2, w:25,h:25, dmg:20, esp:true, bomba:true, vx:5+(i*1.2), vy:-3+(i*1.5)});
+        } else if (heroeSeleccionado === "C-J") {
+            lasers.push({x:nave.x-30, y:nave.y-100, w:250,h:250, dmg:40, esp:true, pulso:true, duracion:20});
+        }
+    }
+
+    function activarPortalMeta() {
+        portal.activo = true;
+        portal.x = canvas.width - 160;
+        portal.y = canvas.height/2 - 55; // Centrado verticalmente respecto a su h
+    }
+
+    function generarParticulas(obs) {
+        const cx = obs.x + obs.w/2, cy = obs.y + obs.h/2;
+        for (let i = 0; i < 12; i++) {
+            const ang = Math.random() * Math.PI * 2, spd = 1.5 + Math.random() * 3;
+            particulas.push({
+                x: cx, y: cy, vx: Math.cos(ang) * spd, vy: Math.sin(ang) * spd,
+                r: 2 + Math.random() * 5, vida: 40 + Math.random() * 30, maxVida: 70,
+                color: `hsl(${20 + Math.random()*20}, 60%, ${30 + Math.random()*30}%)`
+            });
+        }
+    }
+
+    function colision(a,b) { return a.x<b.x+b.w && a.x+a.w>b.x && a.y<b.y+b.h && a.y+a.h>b.y; }
+
+    function spawnObjetos() {
+        if (portal.activo) return;
+        const config = CONFIG_NIVELES[nivelActual];
+
+        if (!config.jefe) {
+            if (frames % config.spawnRateEnemigo === 0)
+                enemigos.push({x:canvas.width+40, y:Math.random()*(canvas.height-45), w:45,h:45, vida:50, vy:config.velEnemigo, dirY:Math.random()>0.5?1:-1, ultimoDisparo:frames+Math.random()*30});
+            
+            if (frames % config.spawnRateObstaculo === 0) {
+                let tam = 40+Math.random()*40;
+                obstaculos.push({ x: canvas.width+60, y: Math.random()*(canvas.height-tam), w: tam, h: tam, vida: 40, vidaMax: 40, roto: false });
+            }
+            
+            if (frames > 600 && frames % 300 === 0 && esferasGeneradas < 3) {
+                esferasVida.push({x:canvas.width+40, y:Math.random()*(canvas.height-40), w:22,h:22});
+                esferasGeneradas++;
+            }
+        } else {
+            if (frames % config.spawnRateObstaculo === 0) {
+                let tam = 35+Math.random()*35;
+                obstaculos.push({ x: canvas.width+60, y: Math.random()*(canvas.height-tam), w: tam, h: tam, vida: 30, vidaMax: 30, roto: false });
+            }
+        }
+
+        if (frames % 900 === 0) galaxias.push(crearGalaxia());
+    }
+
+    function actualizar() {
+        if (juegoTerminado || estadoActual !== 'GAMEPLAY') return;
+        frames++;
+        portalAngulo += 0.04; // Velocidad de rotación del portal
+
+        let ahora = Date.now();
+        if (!nave.listoEsp && (ahora - nave.ultimoEspecial >= pStat.cooldownEsp)) nave.listoEsp = true;
+        document.getElementById('btn-especial').disabled = !nave.listoEsp;
+
+        nave.x += nave.vx; nave.y += nave.vy;
+        nave.x = Math.max(0, Math.min(canvas.width-nave.w, nave.x));
+        nave.y = Math.max(0, Math.min(canvas.height-nave.h, nave.y));
+
+        actualizarHUD();
+        spawnObjetos();
+
+        estrellas.forEach(e => {
+            e.x -= e.vel * (e.capa===0?0.15:e.capa===1?0.35:0.7);
+            if (e.x < 0) e.x = canvas.width;
+        });
+
+        galaxias.forEach((g,i) => { g.x += g.vx; if(g.x<-350) galaxias.splice(i,1); });
+
+        lasers.forEach((l,i) => {
+            if (l.pulso) { l.x=nave.x-50; l.y=nave.y-100; l.duracion--; if(l.duracion<=0) lasers.splice(i,1); return; }
+            l.bomba ? (l.x+=l.vx, l.y+=l.vy) : (l.x+=10, l.vy&&(l.y+=l.vy));
+            if (l.x>canvas.width+100||l.y<-50||l.y>canvas.height+50) lasers.splice(i,1);
+        });
+
+        lasersEnemigos.forEach((le,i) => {
+            le.x -= 6;
+            if (colision(le,nave)) { lasersEnemigos.splice(i,1); recibirDanoHeroe(20); }
+            if (le.x<-20) lasersEnemigos.splice(i,1);
+        });
+
+        obstaculos.forEach((obs,i) => {
+            if (obs.roto) return;
+            obs.x -= 2;
+            if (colision(obs,nave)) {
+                obstaculos.splice(i,1); generarParticulas(obs); recibirDanoHeroe(20); return;
+            }
+            lasers.forEach((l,li) => {
+                if (colision(l,obs)) {
+                    obs.vida -= l.dmg;
+                    if (!l.multi && !l.pulso) lasers.splice(li,1);
+                    if (obs.vida <= 0) { obs.roto = true; generarParticulas(obs); sonidoRompimiento(); obstaculos.splice(i,1); }
+                }
+            });
+            if (obs.x < -100) obstaculos.splice(i,1);
+        });
+        particulas.forEach((p,i) => {
+            p.x += p.vx; p.y += p.vy; p.vx *= 0.96; p.vy *= 0.96; p.vida--;
+            if (p.vida <= 0) particulas.splice(i,1);
+        });
+
+        enemigos.forEach((en,i) => {
+            en.x -= 1.8; en.y += en.vy*en.dirY;
+            if (en.y<10||en.y>canvas.height-en.h-10) en.dirY*=-1;
+            if (frames-en.ultimoDisparo>=90) { en.ultimoDisparo=frames; lasersEnemigos.push({x:en.x,y:en.y+en.h/2-3,w:14,h:6}); }
+            if (colision(en,nave)) { enemigos.splice(i,1); recibirDanoHeroe(20); return; }
+            lasers.forEach((l,li) => {
+                if (colision(l,en)) {
+                    en.vida-=l.dmg;
+                    if (!l.multi&&!l.pulso) lasers.splice(li,1);
+                    if (en.vida<=0) { sonidoExplosion(); enemigos.splice(i,1); }
+                }
+            });
+            if (en.x<-50) enemigos.splice(i,1);
+        });
+         if (jefeNordix.activo) {
+            jefeNordix.y += jefeNordix.velY * jefeNordix.dirY;
+            if (jefeNordix.y < 20 || jefeNordix.y > canvas.height - jefeNordix.h - 20) {
+                jefeNordix.dirY *= -1;
+            }
+
+            if (jefeNordix.vida <= 500 && !jefeNordix.enFuria) {
+                jefeNordix.enFuria = true;
+                jefeNordix.velY = 4;
+            }
+
+            let cadenciaAtaque = jefeNordix.enFuria ? 100 : 160;
+
+            // Disparo directo horizontal hacia el jugador
+            if (!jefeNordix.ultimoDisparoDirecto) jefeNordix.ultimoDisparoDirecto = 0;
+            let cadenciaDisparo = jefeNordix.enFuria ? 55 : 90;
+            if (frames - jefeNordix.ultimoDisparoDirecto >= cadenciaDisparo) {
+                jefeNordix.ultimoDisparoDirecto = frames;
+                let cant = jefeNordix.enFuria ? 3 : 1;
+                for (let k = 0; k < cant; k++) {
+                    let offsetY = cant === 1 ? 0 : (k - 1) * 28;
+                    lasersEnemigos.push({
+                        x: jefeNordix.x - 18,
+                        y: jefeNordix.y + jefeNordix.h/2 - 6 + offsetY,
+                        w: 18, h: 8,
+                        caidaVertical: false
+                    });
+                }
+            }
+
+            if (frames - jefeNordix.ultimoAtaqueElectrico >= cadenciaAtaque * 1.5) {
+                jefeNordix.ultimoAtaqueElectrico = frames;
+                jefeNordix.pulsoActivo = true;
+                jefeNordix.radioPulso = 10;
+            }
+
+            if (jefeNordix.pulsoActivo) {
+                jefeNordix.radioPulso += jefeNordix.enFuria ? 6 : 4;
+                let cjX = jefeNordix.x + jefeNordix.w/2;
+                let cjY = jefeNordix.y + jefeNordix.h/2;
+                let chX = nave.x + nave.w/2;
+                let chY = nave.y + nave.h/2;
+                let dist = Math.sqrt((cjX - chX)**2 + (cjY - chY)**2);
+                
+                if (Math.abs(dist - jefeNordix.radioPulso) < 15) {
+                    recibirDanoHeroe(20);
+                }
+                if (jefeNordix.radioPulso > 180) {
+                    jefeNordix.pulsoActivo = false;
+                }
+            }
+
+            if (frames - jefeNordix.ultimoMeteoritoCielos >= cadenciaAtaque) {
+                jefeNordix.ultimoMeteoritoCielos = frames;
+                let cant = jefeNordix.enFuria ? 4 : 2;
+                for(let k=0; k<cant; k++){
+                    lasersEnemigos.push({
+                        x: Math.random() * (canvas.width * 0.7), 
+                        y: -20, w: 24, h: 24, 
+                        caidaVertical: true, vy: 5 
+                    });
+                }
+            }
+
+            if (jefeNordix.enFuria && (frames - jefeNordix.ultimoMisil >= 120)) {
+                jefeNordix.ultimoMisil = frames;
+                misilesTeledirigidos.push({
+                    x: jefeNordix.x, y: jefeNordix.y + jefeNordix.h/2,
+                    w: 22, h: 12, vx: -5,
+                    vy: (nave.y - (jefeNordix.y + jefeNordix.h/2)) / 50 
+                });
+            }
+
+            misilesTeledirigidos.forEach((m, mi) => {
+                m.x += m.vx; m.y += m.vy;
+                if(colision(m, nave)){
+                    misilesTeledirigidos.splice(mi, 1);
+                    recibirDanoHeroe(30);
+                }
+                if(m.x < -30) misilesTeledirigidos.splice(mi,1);
+            });
+
+            lasers.forEach((l, li) => {
+                if (colision(l, jefeNordix)) {
+                    if (!l.golpeoJefe) {
+                        jefeNordix.vida -= l.dmg;
+                        l.golpeoJefe = true;
+                        sonidoDanio();
+                        if (jefeNordix.vida <= 0) {
+                            jefeNordix.vida = 0;
+                            jefeNordix.activo = false;
+                            juegoTerminado = true;
+                            ejecutarVictoriaFinalJefe();
+                        }
+                    }
+                    if (!l.multi && !l.pulso) lasers.splice(li, 1);
+                } else {
+                    if (l.multi || l.pulso) l.golpeoJefe = false;
+                }
+            });
+        }
+        lasersEnemigos.forEach((le, i) => {
+            if(le.caidaVertical) {
+                le.y += le.vy;
+                le.x -= 1;
+                if (colision(le, nave)) { lasersEnemigos.splice(i,1); recibirDanoHeroe(10); }
+                if (le.y > canvas.height + 20) lasersEnemigos.splice(i,1);
+            }
+        });
+
+        if (portal.activo && colision(nave,portal)) {
+            juegoTerminado = true;
+            sonidoVictoria();
+            setTimeout(() => {
+                avanzarSiguienteEscenaFlujo();
+            }, 600);
+        }
+    }
+    function recibirDanoHeroe(cantidad) {
+        if (nave.escudo > 0) { nave.escudo--; return; }
+        nave.vida -= cantidad;
+        sonidoDanio();
+        if (nave.vida <= 0) {
+            nave.vida = 0; juegoTerminado = true;
+            actualizarHUD();
+            document.getElementById('gameover-sub').textContent = CONFIG_NIVELES[nivelActual].jefe ? "Nordix destruyó tu línea temporal." : "Tu nave fue destruida.";
+            setTimeout(() => { cambiarEstadoSPA('GAMEOVER'); }, 400);
+        }
+    }
+
+    function avanzarSiguienteEscenaFlujo() {
+        nivelActual++;
+        if (CONFIG_NIVELES[nivelActual]) {
+            cargarEscenaDialogos(nivelActual);
+        }
+    }
+
+    function ejecutarVictoriaFinalJefe() {
+        stopMusica();
+        setTimeout(() => {
+            nivelActual = 7;
+            cargarEscenaDialogos(7);
+        }, 1000);
+    }
+
+    function dibujarGalaxia(g) {
+        ctx.save(); ctx.translate(g.x,g.y); ctx.rotate(g.rot);
+        if (g.tipo===0) {
+            let gr = ctx.createRadialGradient(0,0,0,0,0,g.rx);
+            gr.addColorStop(0, `rgba(${g.r},${g.g},${g.b},${g.alpha})`);
+            gr.addColorStop(0.5,`rgba(${g.r},${g.g},${g.b},${g.alpha*0.4})`);
+            gr.addColorStop(1, `rgba(${g.r},${g.g},${g.b},0)`);
+            ctx.fillStyle=gr; ctx.beginPath(); ctx.ellipse(0,0,g.rx,g.ry,0,0,Math.PI*2); ctx.fill();
+        } else if (g.tipo===1) {
+            for (let k=0;k<2;k++) {
+                ctx.strokeStyle=`rgba(${g.r},${g.g},${g.b},${g.alpha*(1-k*0.3)})`; ctx.lineWidth=3-k;
+                ctx.beginPath(); ctx.ellipse(0,0,g.rx*(k?0.55:1),g.ry*(k?0.55:1),0,0,Math.PI*2); ctx.stroke();
+            }
+        } else {
+            g.pts.forEach(p=>{
+                ctx.fillStyle=`rgba(${g.r},${g.g},${g.b},${p.a*g.alpha*5})`;
+                ctx.beginPath(); ctx.arc(p.ox*g.rx,p.oy*g.ry,p.s,0,Math.PI*2); ctx.fill();
+            });
+        }
+        ctx.restore();
+    }
+
+    function dibujarMeteorito(obs) {
+        if (imgObstaculo.lista) {
+            if (obs.vida < obs.vidaMax) {
+                ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(obs.x, obs.y - 7, obs.w, 4);
+                ctx.fillStyle = obs.vida / obs.vidaMax > 0.5 ? '#ff8800' : '#ff3300';
+                ctx.fillRect(obs.x, obs.y - 7, obs.w * (obs.vida / obs.vidaMax), 4);
+            }
+            ctx.drawImage(imgObstaculo, obs.x, obs.y, obs.w, obs.h);
+        } else {
+            ctx.fillStyle = '#6b4f35'; ctx.fillRect(obs.x, obs.y, obs.w, obs.h);
+        }
+    }
+    // PORTAL DIMENSIONAL - Diseño mejorado
+    function dibujarPortalDisenado(p) {
+        const cx = p.x + p.w / 2;
+        const cy = p.y + p.h / 2;
+        const R = p.w / 2;
+        const t = frames;
+
+        ctx.save();
+        ctx.translate(cx, cy);
+
+        // ── HALO EXTERIOR PULSANTE ──────────────────────────────────────
+        const haloR = R * (1.45 + Math.sin(t * 0.04) * 0.08);
+        const gradHalo = ctx.createRadialGradient(0, 0, R * 0.9, 0, 0, haloR);
+        gradHalo.addColorStop(0,   'rgba(0,255,204,0.18)');
+        gradHalo.addColorStop(0.5, 'rgba(120,0,255,0.09)');
+        gradHalo.addColorStop(1,   'rgba(0,0,0,0)');
+        ctx.fillStyle = gradHalo;
+        ctx.beginPath(); ctx.arc(0, 0, haloR, 0, Math.PI * 2); ctx.fill();
+
+        // ── VÓRTICE ESPIRAL (capas cónicas giratorias) ──────────────────
+        const numBrazos = 6;
+        for (let b = 0; b < numBrazos; b++) {
+            const angBase = (b / numBrazos) * Math.PI * 2 + portalAngulo * 0.7;
+            const grad = ctx.createLinearGradient(
+                Math.cos(angBase) * R * 0.1, Math.sin(angBase) * R * 0.1,
+                Math.cos(angBase) * R * 0.95, Math.sin(angBase) * R * 0.95
+            );
+            const alpha = 0.12 + Math.sin(t * 0.06 + b) * 0.05;
+            grad.addColorStop(0,   'rgba(0,255,204,0)');
+            grad.addColorStop(0.4, 'rgba(60,0,200,' + alpha + ')');
+            grad.addColorStop(1,   'rgba(0,255,204,' + (alpha * 1.5) + ')');
+            ctx.save();
+            ctx.rotate(angBase);
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.arc(0, 0, R * 0.95, -0.38, 0.38);
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+        }
+
+        // ── DISCO CENTRAL (fondo absortivo) ─────────────────────────────
+        const gradDisco = ctx.createRadialGradient(0, 0, 0, 0, 0, R * 0.92);
+        gradDisco.addColorStop(0,    'rgba(0,0,0,1)');
+        gradDisco.addColorStop(0.28, 'rgba(5,0,25,0.97)');
+        gradDisco.addColorStop(0.55, 'rgba(0,40,80,0.88)');
+        gradDisco.addColorStop(0.82, 'rgba(0,180,140,0.55)');
+        gradDisco.addColorStop(1,    'rgba(0,255,204,0.0)');
+        ctx.fillStyle = gradDisco;
+        ctx.beginPath(); ctx.arc(0, 0, R * 0.92, 0, Math.PI * 2); ctx.fill();
+
+        // ── ANILLO EXTERNO SÓLIDO CIAN ───────────────────────────────────
+        ctx.save();
+        ctx.rotate(portalAngulo * 0.4);
+        ctx.shadowBlur = 22; ctx.shadowColor = '#00ffcc';
+        ctx.strokeStyle = 'rgba(0,255,204,0.9)';
+        ctx.lineWidth = 4;
+        ctx.beginPath(); ctx.arc(0, 0, R * 0.91, 0, Math.PI * 2); ctx.stroke();
+        ctx.restore();
+
+        // ── ANILLO INTERMEDIO PÚRPURA INCLINADO ──────────────────────────
+        ctx.save();
+        ctx.rotate(-portalAngulo * 0.6);
+        ctx.shadowBlur = 18; ctx.shadowColor = '#a000ff';
+        ctx.strokeStyle = 'rgba(160,0,255,0.75)';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, R * 0.78, R * 0.52, Math.PI * 0.25, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+
+        // ── ANILLO INTERNO AZUL INCLINADO ────────────────────────────────
+        ctx.save();
+        ctx.rotate(portalAngulo * 1.1);
+        ctx.shadowBlur = 14; ctx.shadowColor = '#00aaff';
+        ctx.strokeStyle = 'rgba(0,170,255,0.6)';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, R * 0.56, R * 0.76, -Math.PI * 0.3, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+
+        // ── RAYOS DE ENERGÍA DESDE EL NÚCLEO ─────────────────────────────
+        ctx.save();
+        ctx.rotate(portalAngulo * 1.8);
+        const numRayos = 12;
+        for (let i = 0; i < numRayos; i++) {
+            const ang = (i / numRayos) * Math.PI * 2;
+            const pulso = 0.4 + Math.sin(t * 0.08 + i * 0.9) * 0.25;
+            const grad = ctx.createLinearGradient(0, 0, Math.cos(ang) * R * 0.88, Math.sin(ang) * R * 0.88);
+            grad.addColorStop(0,   'rgba(255,255,255,' + (pulso * 0.8) + ')');
+            grad.addColorStop(0.5, 'rgba(0,255,204,' + (pulso * 0.4) + ')');
+            grad.addColorStop(1,   'rgba(0,255,204,0)');
+            ctx.strokeStyle = grad;
+            ctx.lineWidth = 1.2;
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(Math.cos(ang) * R * 0.88, Math.sin(ang) * R * 0.88);
+            ctx.stroke();
+        }
+        ctx.restore();
+
+        // ── CHISPAS ORBITANDO EL BORDE ────────────────────────────────────
+        ctx.save();
+        ctx.rotate(-portalAngulo * 0.9);
+        const numChispas = 14;
+        for (let i = 0; i < numChispas; i++) {
+            const ang = (i / numChispas) * Math.PI * 2;
+            const radio = R * 0.91;
+            const px2 = Math.cos(ang) * radio;
+            const py2 = Math.sin(ang) * radio;
+            const sz  = 1.8 + Math.sin(t * 0.12 + i * 1.3) * 1.0;
+            const bright = 0.5 + Math.sin(t * 0.15 + i) * 0.5;
+            const col = i % 3 === 0 ? 'rgba(180,0,255,' + bright + ')' :
+                        i % 3 === 1 ? 'rgba(0,255,204,' + bright + ')' :
+                                      'rgba(255,255,255,' + bright + ')';
+            ctx.fillStyle = col;
+            ctx.shadowBlur = 8; ctx.shadowColor = col;
+            ctx.beginPath(); ctx.arc(px2, py2, sz, 0, Math.PI * 2); ctx.fill();
+        }
+        ctx.restore();
+
+        // ── CHISPAS SECUNDARIAS ÓRBITA INTERIOR ──────────────────────────
+        ctx.save();
+        ctx.rotate(portalAngulo * 1.5);
+        const numChispas2 = 8;
+        for (let i = 0; i < numChispas2; i++) {
+            const ang = (i / numChispas2) * Math.PI * 2;
+            const radio2 = R * 0.68;
+            const px3 = Math.cos(ang) * radio2;
+            const py3 = Math.sin(ang) * radio2;
+            const sz2  = 1.2 + Math.sin(t * 0.18 + i * 2.1) * 0.7;
+            ctx.fillStyle = 'rgba(0,200,255,' + (0.4 + Math.sin(t*0.1+i)*0.4) + ')';
+            ctx.shadowBlur = 6; ctx.shadowColor = '#00ccff';
+            ctx.beginPath(); ctx.arc(px3, py3, sz2, 0, Math.PI * 2); ctx.fill();
+        }
+        ctx.restore();
+
+        // ── NÚCLEO CENTRAL PULSANTE ───────────────────────────────────────
+        const pNucleo  = 0.85 + Math.sin(t * 0.18) * 0.15;
+        const rNucleo  = R * 0.22 * pNucleo;
+        const gradCore = ctx.createRadialGradient(0, 0, 0, 0, 0, rNucleo);
+        gradCore.addColorStop(0,   'rgba(255,255,255,0.95)');
+        gradCore.addColorStop(0.3, 'rgba(180,255,240,0.6)');
+        gradCore.addColorStop(0.7, 'rgba(0,255,204,0.25)');
+        gradCore.addColorStop(1,   'rgba(0,255,204,0)');
+        ctx.shadowBlur = 30; ctx.shadowColor = '#00ffcc';
+        ctx.fillStyle = gradCore;
+        ctx.beginPath(); ctx.arc(0, 0, rNucleo, 0, Math.PI * 2); ctx.fill();
+
+        // Flash del núcleo
+        const flashAlpha = Math.max(0, Math.sin(t * 0.22) * 0.2);
+        ctx.fillStyle = 'rgba(255,255,255,' + flashAlpha + ')';
+        ctx.beginPath(); ctx.arc(0, 0, R * 0.1, 0, Math.PI * 2); ctx.fill();
+
+        // ── TEXTO FLOTANTE "PORTAL" ───────────────────────────────────────
+        const txtAlpha = 0.5 + Math.sin(t * 0.08) * 0.3;
+        ctx.font = 'bold ' + Math.round(R * 0.18) + 'px Orbitron, monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.shadowBlur = 10; ctx.shadowColor = '#00ffcc';
+        ctx.fillStyle = 'rgba(0,255,204,' + txtAlpha + ')';
+        ctx.fillText('PORTAL', 0, R * 0.62);
+
+        ctx.restore();
+    }
+
+    function dibujar() {
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        ctx.fillStyle = '#02020a'; ctx.fillRect(0,0,canvas.width,canvas.height);
+
+        galaxias.forEach(dibujarGalaxia);
+
+        estrellas.forEach(e => {
+            ctx.globalAlpha = e.bri;
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath(); ctx.arc(e.x,e.y,e.s/2,0,Math.PI*2); ctx.fill();
+        });
+        ctx.globalAlpha = 1;
+
+        esferasVida.forEach(esf => {
+            ctx.fillStyle='#00ff88'; ctx.beginPath(); ctx.arc(esf.x+11,esf.y+11,11,0,Math.PI*2); ctx.fill();
+        });
+
+        obstaculos.forEach(obs => { if (!obs.roto) dibujarMeteorito(obs); });
+
+        particulas.forEach(p => {
+            ctx.fillStyle = p.color; ctx.fillRect(p.x, p.y, p.r, p.r);
+        });
+
+        enemigos.forEach(en => {
+            if (imgVillano.lista) { ctx.drawImage(imgVillano,en.x,en.y,en.w,en.h); }
+            else { ctx.fillStyle='#aa00ff'; ctx.fillRect(en.x,en.y,en.w,en.h); }
+        });
+
+        lasers.forEach(l => {
+            if (l.pulso) return;
+            
+            ctx.save();
+            if (l.esp) {
+                ctx.shadowBlur = 18;
+                ctx.shadowColor = '#ffcc00';
+                if (imgLaserEspecial.lista) {
+                    if (heroeSeleccionado === "Nahomy" && l.bomba) {
+                        ctx.translate(l.x + l.w/2, l.y + l.h/2);
+                        ctx.rotate(frames * 0.2);
+                        ctx.drawImage(imgLaserEspecial, -l.w/2, -l.h/2, l.w, l.h);
+                    } else {
+                        ctx.drawImage(imgLaserEspecial, l.x, l.y, l.w, l.h);
+                    }
+                } else {
+                    // Fallback visual para especiales cuando no hay imagen
+                    if (heroeSeleccionado === "Kleydi") {
+                        ctx.fillStyle = '#ff44aa';
+                        ctx.beginPath(); ctx.arc(l.x + l.w/2, l.y + l.h/2, l.w/2, 0, Math.PI*2); ctx.fill();
+                        ctx.strokeStyle = '#ffaadd'; ctx.lineWidth = 2;
+                        ctx.beginPath(); ctx.arc(l.x + l.w/2, l.y + l.h/2, l.w/2 + 4, 0, Math.PI*2); ctx.stroke();
+                    } else if (heroeSeleccionado === "Brandon") {
+                        const grad = ctx.createLinearGradient(l.x, l.y, l.x + l.w, l.y);
+                        grad.addColorStop(0, '#ffcc00'); grad.addColorStop(1, '#ff6600');
+                        ctx.fillStyle = grad;
+                        ctx.fillRect(l.x, l.y, l.w, l.h);
+                    } else if (heroeSeleccionado === "Nahomy") {
+                        ctx.fillStyle = '#aaff00';
+                        ctx.save(); ctx.translate(l.x + l.w/2, l.y + l.h/2); ctx.rotate(frames * 0.2);
+                        ctx.fillRect(-l.w/2, -l.h/2, l.w, l.h); ctx.restore();
+                    } else if (heroeSeleccionado === "C-J") {
+                        ctx.strokeStyle = 'rgba(160,96,255,0.7)'; ctx.lineWidth = 3;
+                        ctx.beginPath(); ctx.arc(l.x + l.w/2, l.y + l.h/2, l.w/2, 0, Math.PI*2); ctx.stroke();
+                        ctx.fillStyle = 'rgba(160,96,255,0.15)';
+                        ctx.beginPath(); ctx.arc(l.x + l.w/2, l.y + l.h/2, l.w/2, 0, Math.PI*2); ctx.fill();
+                    }
+                }
+            } else {
+                ctx.shadowBlur = 5;
+                ctx.shadowColor = '#00ffcc';
+                if (imgLaserHeroe.lista) {
+                    ctx.drawImage(imgLaserHeroe, l.x, l.y, l.w, l.h);
+                } else {
+                    // Fallback para disparo normal
+                    ctx.fillStyle = '#00ffcc';
+                    ctx.fillRect(l.x, l.y, l.w, l.h);
+                }
+            }
+            ctx.restore();
+        });
+
+        lasersEnemigos.forEach(le => {
+            if (le.caidaVertical) {
+                ctx.fillStyle = '#ff3300';
+                ctx.beginPath(); ctx.arc(le.x+le.w/2, le.y+le.h/2, le.w/2, 0, Math.PI*2); ctx.fill();
+            } else {
+                if (imgLaserVillano.lista) { ctx.drawImage(imgLaserVillano,le.x,le.y,le.w,le.h); }
+                else { ctx.fillStyle='#ff4400'; ctx.fillRect(le.x,le.y,le.w,le.h); }
+            }
+        });
+
+        if (jefeNordix.activo) {
+            ctx.save();
+            if (jefeNordix.enFuria) {
+                ctx.filter = `drop-shadow(0px 0px 15px #ff0000) hue-rotate(320deg)`;
+            }
+            if (imgJefe.lista) {
+                ctx.drawImage(imgJefe, jefeNordix.x, jefeNordix.y, jefeNordix.w, jefeNordix.h);
+            } else {
+                ctx.fillStyle = '#ff0055'; ctx.fillRect(jefeNordix.x, jefeNordix.y, jefeNordix.w, jefeNordix.h);
+            }
+            ctx.restore();
+
+            if (jefeNordix.pulsoActivo) {
+                ctx.save();
+                ctx.strokeStyle = jefeNordix.enFuria ? 'rgba(255, 50, 0, 0.6)' : 'rgba(0, 255, 230, 0.5)';
+                ctx.lineWidth = jefeNordix.enFuria ? 5 : 3;
+                ctx.beginPath();
+                ctx.arc(jefeNordix.x + jefeNordix.w/2, jefeNordix.y + jefeNordix.h/2, jefeNordix.radioPulso, 0, Math.PI*2);
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            misilesTeledirigidos.forEach(m => {
+                ctx.fillStyle = '#ffea00';
+                ctx.fillRect(m.x, m.y, m.w, m.h);
+                ctx.fillStyle = '#ff0000';
+                ctx.fillRect(m.x + m.w - 4, m.y - 1, 4, m.h + 2);
+            });
+        }
+
+        // MODIFICACIÓN: Dibujar el portal rediseñado por código
+        if (portal.activo) {
+            dibujarPortalDisenado(portal);
+        }
+
+        if (imgNave.lista) { ctx.drawImage(imgNave,nave.x,nave.y,nave.w,nave.h); }
+        else { ctx.fillStyle='#00ffcc'; ctx.fillRect(nave.x,nave.y,nave.w,nave.h); }
+
+        if (nave.escudo > 0) {
+            ctx.strokeStyle='rgba(0,200,255,0.5)'; ctx.lineWidth=2;
+            ctx.beginPath(); ctx.arc(nave.x+nave.w/2,nave.y+nave.h/2,nave.w*0.7,0,Math.PI*2); ctx.stroke();
+        }
+    }
+
+    function gameLoop() {
+        if (enPausa || juegoTerminado || estadoActual !== 'GAMEPLAY') return;
+        actualizar();
+        dibujar();
+        requestAnimationFrame(gameLoop);
+    }
+    cambiarEstadoSPA('MENU'); 
+</script>
+</body>
+</html>
